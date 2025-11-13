@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useColorScheme } from '@mui/material/styles'
-import { useLocation, useNavigate, Link as RouterLink } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import ComputerIcon from '@mui/icons-material/Computer'
 import DarkModeIcon from '@mui/icons-material/DarkMode'
 import LightModeIcon from '@mui/icons-material/LightMode'
@@ -18,7 +18,7 @@ import BuildIcon from '@mui/icons-material/Build'
 import MonitorIcon from '@mui/icons-material/Monitor'
 import Container from '@mui/material/Container'
 import TextField from '@mui/material/TextField'
-import Link from '@mui/material/Link'
+import { Link } from 'react-router-dom'
 
 import theme from '../theme'
 import Footer from '../Components/Footer'
@@ -176,7 +176,7 @@ function RoleCard({ icon, title, description, selected, onClick }) {
   )
 }
 
-function Login() {
+function Signup() {
   const navigate = useNavigate()
   const [selectedRole, setSelectedRole] = useState('')
   const [email, setEmail] = useState('')
@@ -208,10 +208,10 @@ function Login() {
 
     // Navigate to appropriate dashboard based on role
     switch (selectedRole) {
-    case 'engineer':
+    case 'admin':
       navigate('/engineer/dashboard')
       break
-    case 'manager':
+    case 'tutor':
       navigate('/manager/dashboard')
       break
     default:
@@ -222,14 +222,13 @@ function Login() {
   return (
     <Box
       sx={{
-        height: '100vh',
+        minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
         bgcolor: 'background.default'
       }}
     >
       <Header />
-      {/* <Toolbar sx={{ px: { xs: 2, sm: 3 } }} /> */}
 
       <Box
         component="main"
@@ -243,7 +242,7 @@ function Login() {
         <Container maxWidth="md">
           <Box sx={{ textAlign: 'center', mb: 6 }}>
             <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
-              Welcome Back to WineManu
+              Welcome to WineManu
             </Typography>
             <Typography variant="body1" color="text.secondary">
               Choose your role to continue your journey.
@@ -319,21 +318,8 @@ function Login() {
                   }
                 }}
               >
-                Sign In
+                Sign Up
               </Button>
-
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box>
-                  Don't have an account?
-                  {' '}
-                  <Link component={RouterLink} to="/signup" underline="hover" color="primary">
-                    Sign Up?
-                  </Link>
-                </Box>
-                <Link component={RouterLink} to="/forgot-password" underline="hover" variant="body2" color="primary">
-                  Forgot Password?
-                </Link>
-              </Box>
             </Box>
           </Box>
         </Container>
@@ -344,4 +330,4 @@ function Login() {
   )
 }
 
-export default Login
+export default Signup

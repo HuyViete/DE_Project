@@ -7,6 +7,10 @@ import Login from './Pages/Login'
 
 const Help = React.lazy(() => import('./pages/Help'))
 const About = React.lazy(() => import('./pages/About'))
+const Signup = React.lazy(() => import('./Pages/Signup'))
+
+const EngineerDashboard = React.lazy(() => import('./Pages/Engineer/Dashboard'))
+const ManagerDashboard = React.lazy(() => import('./Pages/Manager/Dashboard'))
 
 const PageLoader = () => (
   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -14,17 +18,33 @@ const PageLoader = () => (
   </div>
 )
 
+const getUserRole = () => {
+
+  return 'engineer'
+}
+
+const DashboardWrapper = () => {
+  const role = getUserRole()
+
+  if (role == 'engineer') return <EngineerDashboard />
+  if (role == 'manager') return <ManagerDashboard />
+  return
+}
+
 export default function App() {
   return (
     <Router>
-      {/* Bọc toàn bộ <Routes> bằng <Suspense> và cung cấp fallback */}
       <Suspense fallback={<PageLoader />}>
         <Routes>
-          {/* Route này không lazy, sẽ tải ngay lập tức */}
           <Route path='/' element={<Navigate to="/login" replace />} />
           <Route path='/login' element={<Login />} />
+          <Route path='/signup' element={<Signup />} />
 
-          <Route />
+          <Route path='/help' element={<Help />} />
+          <Route path='/about' element={<About />} />
+
+          <Route path='/dashboard' element={<DashboardWrapper />} />
+
         </Routes>
       </Suspense>
     </Router>
