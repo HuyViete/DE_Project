@@ -1,10 +1,15 @@
 import bcrypt from 'bcrypt'
-import { getUser, createUser } from '../libs/db.js'
+import { getUserByUsername, createUser } from '../models/User'
+import { createSession, deleteSessionByToken } from '../models/Session'
 import jwt from 'jsonwebtoken'
-import cryptio from 'crypto'
+import crypto from 'crypto'
+
+import dotenv from 'dotenv'
+dotenv.config();
 
 const ACCESS_TOKEN_TTL = '30m';
-const REFRESH_TOKEN_TTL = 14 * 24 * 60 * 1000;
+// const REFRESH_TOKEN_TTL = 14 * 24 * 60 * 60 * 1000;
+const REFRESH_TOKEN_TTL = 100;
 
 export const signUp = async (req, res) => {
   try {
@@ -17,7 +22,7 @@ export const signUp = async (req, res) => {
       return res.status(400).json({message: "Missing sign up information!"})
     }
 
-    const duplicate = await getUser(username)
+    const duplicate = await getUserByUsername(username)
 
     if (duplicate) {
       return res.status(400).json({message: "Username is taken!"})
@@ -39,12 +44,15 @@ export const signIn = async (req, res) => {
   try {
     const {username, password} = req.body;
 
+    if (!process.env.ACCESS_TOKEN_SECRET) {
+      return res.status(500).json({ message: 'Missing ACCESS_TOKEN_SECRET' })
+    }
+
     if (username == null || password == null) {
       return res.status(400).json({message: "Missing username or password!"})
     }
 
-    const user = await getUser(username);
-
+    const user = await getUserByUsername(username);
     if (!user) {
       return res.status(401).json({message: "Username or Password is incorrect!"})
     }
@@ -67,8 +75,8 @@ export const signIn = async (req, res) => {
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // local dev có thể đặt false
-      sameSite: 'lax',
+      secure: true, // local dev có thể đặt false
+      sameSite: 'none',
       maxAge: REFRESH_TOKEN_TTL
     })
 
@@ -80,6 +88,27 @@ export const signIn = async (req, res) => {
     });
   } catch (error) {
     console.error('Fail in sign in!', error);
+    return res.status(500).json({message: 'System failed'});
+  }
+}
+
+export const signOut = async (req, res) => {
+  try {
+    const token = req.cookies?.refreshToken;
+
+    if (token) {
+      await deleteSessionByToken(token);
+
+      res.clearCookie('refreshToken', {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none'
+      });
+    }
+
+    return res.status(204);
+  } catch (error) {
+    console.error('Fail in sign out!', error);
     return res.status(500).json({message: 'System failed'});
   }
 }
