@@ -24,7 +24,9 @@ create table Users(
     exp_year int,
     username varchar(50),
     password varchar(50),
-    role varchar(50) not null
+    role varchar(50) not null,
+    warehouse_id int,
+    foreign key (warehouse_id) references Warehouse(warehouse_id)
 );
 
 create table Tester(

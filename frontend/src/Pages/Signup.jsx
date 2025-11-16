@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useColorScheme } from '@mui/material/styles'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, Link as RouterLink } from 'react-router-dom'
 import ComputerIcon from '@mui/icons-material/Computer'
 import DarkModeIcon from '@mui/icons-material/DarkMode'
 import LightModeIcon from '@mui/icons-material/LightMode'
@@ -18,10 +18,12 @@ import BuildIcon from '@mui/icons-material/Build'
 import MonitorIcon from '@mui/icons-material/Monitor'
 import Container from '@mui/material/Container'
 import TextField from '@mui/material/TextField'
-import { Link } from 'react-router-dom'
+import Link from '@mui/material/Link'
+import VerifiedIcon from '@mui/icons-material/Verified'
 
 import theme from '../theme'
 import Footer from '../Components/Footer'
+import { useAuthStore } from '../stores/useAuthStore'
 
 function ModeSwitcher() {
   const { mode, setMode } = useColorScheme()
@@ -178,9 +180,19 @@ function RoleCard({ icon, title, description, selected, onClick }) {
 
 function Signup() {
   const navigate = useNavigate()
+  const { signUp } = useAuthStore()
   const [selectedRole, setSelectedRole] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [formData, setFormData] = useState({
+    username: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    firstName: '',
+    lastName: '',
+    experienceYears: ''
+  })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const roles = [
     {
@@ -194,28 +206,58 @@ function Signup() {
       icon: <MonitorIcon sx={{ fontSize: 48 }} />,
       title: 'Manager',
       description: 'Monitoring and receiving alerts.'
+    },
+    {
+      id: 'tester',
+      icon: <VerifiedIcon sx={{ fontSize: 48 }} />,
+      title: 'Tester',
+      description: 'Test and validation.'
     }
   ]
 
-  const handleSubmit = (e) => {
+  const handleInputChange = (e) => {
+    const { name, value } = e.target
+    setFormData({
+      ...formData,
+      [name]: value
+    })
+  }
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
+    setError('')
 
     // Validate role selection
     if (!selectedRole) {
-      alert('Please select a role before signing in')
+      setError('Please select a role before signing up')
       return
     }
 
-    // Navigate to appropriate dashboard based on role
-    switch (selectedRole) {
-    case 'admin':
-      navigate('/engineer/dashboard')
-      break
-    case 'tutor':
-      navigate('/manager/dashboard')
-      break
-    default:
-      break
+    // Validate password match
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match')
+      return
+    }
+
+    // Validate experience years
+    if (formData.experienceYears && (isNaN(formData.experienceYears) || formData.experienceYears < 0)) {
+      setError('Please enter a valid number for experience years')
+      return
+    }
+
+    setLoading(true)
+
+    try {
+      // Send data to backend API
+      await signUp(formData.username, formData.password, formData.email, formData.firstName, formData.lastName, formData.experienceYears, selectedRole)
+
+
+      navigate('/login')
+
+    } catch (err) {
+      setError('Network error. Please check your connection.', err)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -236,16 +278,16 @@ function Signup() {
           flexGrow: 1,
           display: 'flex',
           alignItems: 'center',
-          py: 6
+          py: 10
         }}
       >
         <Container maxWidth="md">
           <Box sx={{ textAlign: 'center', mb: 6 }}>
             <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
-              Welcome to WineManu
+              Join WineManu
             </Typography>
             <Typography variant="body1" color="text.secondary">
-              Choose your role to continue your journey.
+              Create your account and start your journey with us.
             </Typography>
           </Box>
 
@@ -271,15 +313,49 @@ function Signup() {
             ))}
           </Box>
 
-          {/* Login Form */}
-          <Box sx={{ maxWidth: 560, mx: 'auto' }}>
-            <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {/* Signup Form */}
+          <Box sx={{ maxWidth: 700, mx: 'auto' }}>
+            {error && (
+              <Box
+                sx={{
+                  mb: 2,
+                  p: 2,
+                  bgcolor: 'error.light',
+                  color: 'error.contrastText',
+                  borderRadius: 1,
+                  textAlign: 'center'
+                }}
+              >
+                {error}
+              </Box>
+            )}
+
+            <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+              {/* Username */}
               <TextField
                 fullWidth
-                placeholder="Enter your email"
+                label="Username"
+                name="username"
+                placeholder="Enter your username"
+                value={formData.username}
+                onChange={handleInputChange}
+                required
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    bgcolor: 'background.paper'
+                  }
+                }}
+              />
+
+              {/* Email */}
+              <TextField
+                fullWidth
+                label="Email"
+                name="email"
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                value={formData.email}
+                onChange={handleInputChange}
                 required
                 sx={{
                   '& .MuiOutlinedInput-root': {
@@ -288,12 +364,47 @@ function Signup() {
                 }}
               />
 
+              {/* First Name and Last Name in a row */}
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <TextField
+                  fullWidth
+                  label="First Name"
+                  name="firstName"
+                  placeholder="Enter your first name"
+                  value={formData.firstName}
+                  onChange={handleInputChange}
+                  required
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      bgcolor: 'background.paper'
+                    }
+                  }}
+                />
+                <TextField
+                  fullWidth
+                  label="Last Name"
+                  name="lastName"
+                  placeholder="Enter your last name"
+                  value={formData.lastName}
+                  onChange={handleInputChange}
+                  required
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      bgcolor: 'background.paper'
+                    }
+                  }}
+                />
+              </Box>
+
+              {/* Password */}
               <TextField
                 fullWidth
-                placeholder="Enter your password"
+                label="Password"
+                name="password"
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                value={formData.password}
+                onChange={handleInputChange}
                 required
                 sx={{
                   '& .MuiOutlinedInput-root': {
@@ -302,13 +413,51 @@ function Signup() {
                 }}
               />
 
+              {/* Confirm Password */}
+              <TextField
+                fullWidth
+                label="Confirm Password"
+                name="confirmPassword"
+                type="password"
+                placeholder="Re-enter your password"
+                value={formData.confirmPassword}
+                onChange={handleInputChange}
+                required
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    bgcolor: 'background.paper'
+                  }
+                }}
+              />
+
+              {/* Experience Years */}
+              <TextField
+                fullWidth
+                label="Experience Years"
+                name="experienceYears"
+                type="number"
+                placeholder="Enter your years of experience"
+                value={formData.experienceYears}
+                onChange={handleInputChange}
+                required
+                inputProps={{ min: 0, step: 1 }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    bgcolor: 'background.paper'
+                  }
+                }}
+              />
+
+              {/* Submit Button */}
               <Button
                 type="submit"
                 variant="contained"
                 fullWidth
                 size="large"
+                disabled={loading}
                 sx={{
                   py: 1.5,
+                  mt: 1,
                   textTransform: 'none',
                   fontSize: '1rem',
                   fontWeight: 600,
@@ -318,8 +467,17 @@ function Signup() {
                   }
                 }}
               >
-                Sign Up
+                {loading ? 'Creating Account...' : 'Sign Up'}
               </Button>
+
+              {/* Login Link */}
+              <Box sx={{ textAlign: 'center' }}>
+                Already have an account?
+                {' '}
+                <Link component={RouterLink} to="/login" underline="hover" color="primary">
+                  Sign In
+                </Link>
+              </Box>
             </Box>
           </Box>
         </Container>

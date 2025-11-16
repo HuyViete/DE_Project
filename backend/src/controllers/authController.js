@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt'
-import { getUserByUsername, createUser } from '../models/User'
-import { createSession, deleteSessionByToken } from '../models/Session'
+import { getUserByUsername, createUser } from '../models/User.js'
+import { createSession, deleteSessionByToken } from '../models/Session.js'
 import jwt from 'jsonwebtoken'
 import crypto from 'crypto'
 
@@ -8,8 +8,8 @@ import dotenv from 'dotenv'
 dotenv.config();
 
 const ACCESS_TOKEN_TTL = '30m';
-// const REFRESH_TOKEN_TTL = 14 * 24 * 60 * 60 * 1000;
-const REFRESH_TOKEN_TTL = 100;
+const REFRESH_TOKEN_TTL = 14 * 24 * 60 * 60 * 1000;
+// const REFRESH_TOKEN_TTL = 100;
 
 export const signUp = async (req, res) => {
   try {
@@ -106,7 +106,7 @@ export const signOut = async (req, res) => {
       });
     }
 
-    return res.status(204);
+    return res.status(204).send();
   } catch (error) {
     console.error('Fail in sign out!', error);
     return res.status(500).json({message: 'System failed'});

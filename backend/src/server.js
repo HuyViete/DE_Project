@@ -1,9 +1,11 @@
 import express from "express"
+import cors from "cors"
 import authRoute from './routes/authRoute.js'
 import userRoute from './routes/userRoute.js'
 import { connectDB } from "./libs/db.js";
 import { purgeExpiredSessions } from "./models/Session.js";
 import cookieParser from 'cookie-parser'
+import { protectedRoute } from "./middlewares/authMiddleware.js";
 
 import dotenv from 'dotenv'
 dotenv.config();
@@ -15,6 +17,10 @@ const app = express();
 connectDB();
 
 // middleware
+app.use(cors({
+  origin: process.env.CLIENT_URL,
+  credentials: true
+}));
 app.use(express.json());
 app.use(cookieParser());
 
@@ -30,6 +36,7 @@ setInterval(async () => {
 app.use("/api/auth", authRoute);
 
 // private route
+app.use(protectedRoute);
 app.use("/api/users", userRoute);
 
 app.listen(PORT, () => {

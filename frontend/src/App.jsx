@@ -1,9 +1,11 @@
 import * as React from 'react'
 import { Suspense } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { useAuthStore } from './stores/useAuthStore'
 
 // --- CÁC COMPONENT TĨNH ---
 import Login from './Pages/Login'
+import ProtectedRoute from './Components/auth/ProtectedRoute'
 
 const Help = React.lazy(() => import('./pages/Help'))
 const About = React.lazy(() => import('./pages/About'))
@@ -11,6 +13,7 @@ const Signup = React.lazy(() => import('./Pages/Signup'))
 
 const EngineerDashboard = React.lazy(() => import('./Pages/Engineer/Dashboard'))
 const ManagerDashboard = React.lazy(() => import('./Pages/Manager/Dashboard'))
+const TesterDashboard = React.lazy(() => import('./Pages/Tester/Dashboard'))
 
 const PageLoader = () => (
   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -18,17 +21,17 @@ const PageLoader = () => (
   </div>
 )
 
-const getUserRole = () => {
-
-  return 'engineer'
-}
-
 const DashboardWrapper = () => {
-  const role = getUserRole()
+  const user = useAuthStore((s) => s.user)
+  const role = user?.role
 
-  if (role == 'engineer') return <EngineerDashboard />
-  if (role == 'manager') return <ManagerDashboard />
-  return
+  if (!role) return <Navigate to='/login' replace />
+
+  if (role === 'engineer') return <EngineerDashboard />
+  if (role === 'manager') return <ManagerDashboard />
+  if (role === 'tester') return <TesterDashboard />
+
+  return <Navigate to='/login' replace />
 }
 
 export default function App() {
@@ -43,7 +46,9 @@ export default function App() {
           <Route path='/help' element={<Help />} />
           <Route path='/about' element={<About />} />
 
-          <Route path='/dashboard' element={<DashboardWrapper />} />
+          <Route element={<ProtectedRoute/>}>
+            <Route path='/dashboard' element={<DashboardWrapper />} />
+          </Route>
 
         </Routes>
       </Suspense>

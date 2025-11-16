@@ -39,7 +39,6 @@ export default defineConfig([
       // your style rules
       'react/prop-types': 0,
       'react/display-name': 0,
-      'no-console': 1,
       'no-unused-vars': 1,
       'no-trailing-spaces': 1,
       'no-multi-spaces': 1,

@@ -5,8 +5,6 @@ import ComputerIcon from '@mui/icons-material/Computer'
 import DarkModeIcon from '@mui/icons-material/DarkMode'
 import LightModeIcon from '@mui/icons-material/LightMode'
 import AppBar from '@mui/material/AppBar'
-import Card from '@mui/material/Card'
-import CardContent from '@mui/material/CardContent'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import MenuItem from '@mui/material/MenuItem'
@@ -14,14 +12,13 @@ import Select from '@mui/material/Select'
 import Toolbar from '@mui/material/Toolbar'
 import Typography from '@mui/material/Typography'
 import FormControl from '@mui/material/FormControl'
-import BuildIcon from '@mui/icons-material/Build'
-import MonitorIcon from '@mui/icons-material/Monitor'
 import Container from '@mui/material/Container'
 import TextField from '@mui/material/TextField'
 import Link from '@mui/material/Link'
 
 import theme from '../theme'
 import Footer from '../Components/Footer'
+import { useAuthStore } from '../stores/useAuthStore'
 
 function ModeSwitcher() {
   const { mode, setMode } = useColorScheme()
@@ -128,94 +125,29 @@ function Header() {
   )
 }
 
-function RoleCard({ icon, title, description, selected, onClick }) {
-  return (
-    <Card
-      sx={{
-        width: 200,
-        cursor: 'pointer',
-        transition: 'all 0.3s',
-        border: 1,
-        borderColor: 'divider',
-        outline: selected ? '2px solid' : 'none',
-        outlineColor: 'primary.main',
-        outlineOffset: '-1px',
-        '&:hover': {
-          borderColor: 'primary.main',
-          transform: 'translateY(-4px)',
-          boxShadow: 3
-        }
-      }}
-      onClick={onClick}
-    >
-      <CardContent
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 1.5,
-          py: 3
-        }}
-      >
-        <Box sx={{ color: 'primary.main', fontSize: 48 }}>
-          {icon}
-        </Box>
-        <Typography variant="h6" sx={{ fontWeight: 600 }}>
-          {title}
-        </Typography>
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          align="center"
-          sx={{ fontSize: '0.875rem' }}
-        >
-          {description}
-        </Typography>
-      </CardContent>
-    </Card>
-  )
-}
-
 function Login() {
   const navigate = useNavigate()
-  const [selectedRole, setSelectedRole] = useState('')
-  const [email, setEmail] = useState('')
+  const { signIn } = useAuthStore()
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
-  const roles = [
-    {
-      id: 'engineer',
-      icon: <BuildIcon sx={{ fontSize: 48 }} />,
-      title: 'Engineer',
-      description: 'Engineering and managing system.'
-    },
-    {
-      id: 'manager',
-      icon: <MonitorIcon sx={{ fontSize: 48 }} />,
-      title: 'Manager',
-      description: 'Monitoring and receiving alerts.'
-    }
-  ]
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
+    setError('')
+    setLoading(true)
 
-    // Validate role selection
-    if (!selectedRole) {
-      alert('Please select a role before signing in')
-      return
-    }
+    try {
+      await signIn(username, password)
 
-    // Navigate to appropriate dashboard based on role
-    switch (selectedRole) {
-    case 'engineer':
-      navigate('/engineer/dashboard')
-      break
-    case 'manager':
-      navigate('/manager/dashboard')
-      break
-    default:
-      break
+      // Navigate to dashboard based on role from backend
+      navigate('/dashboard')
+    } catch (error) {
+      setError('Failed to sign in. Please check your credentials.')
+      console.error('Login error:', error)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -246,41 +178,34 @@ function Login() {
               Welcome Back to WineManu
             </Typography>
             <Typography variant="body1" color="text.secondary">
-              Choose your role to continue your journey.
+              Sign in to continue your journey.
             </Typography>
-          </Box>
-
-          {/* Role Selection Cards */}
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'center',
-              gap: 3,
-              mb: 6,
-              flexWrap: 'wrap'
-            }}
-          >
-            {roles.map((role) => (
-              <RoleCard
-                key={role.id}
-                icon={role.icon}
-                title={role.title}
-                description={role.description}
-                selected={selectedRole === role.id}
-                onClick={() => setSelectedRole(role.id)}
-              />
-            ))}
           </Box>
 
           {/* Login Form */}
           <Box sx={{ maxWidth: 560, mx: 'auto' }}>
+            {error && (
+              <Box
+                sx={{
+                  mb: 2,
+                  p: 2,
+                  bgcolor: 'error.light',
+                  color: 'error.contrastText',
+                  borderRadius: 1,
+                  textAlign: 'center'
+                }}
+              >
+                {error}
+              </Box>
+            )}
+
             <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <TextField
                 fullWidth
-                placeholder="Enter your email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                label="Username"
+                placeholder="Enter your username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 required
                 sx={{
                   '& .MuiOutlinedInput-root': {
@@ -291,6 +216,7 @@ function Login() {
 
               <TextField
                 fullWidth
+                label="Password"
                 placeholder="Enter your password"
                 type="password"
                 value={password}
@@ -308,6 +234,7 @@ function Login() {
                 variant="contained"
                 fullWidth
                 size="large"
+                disabled={loading}
                 sx={{
                   py: 1.5,
                   textTransform: 'none',
@@ -319,7 +246,7 @@ function Login() {
                   }
                 }}
               >
-                Sign In
+                {loading ? 'Signing In...' : 'Sign In'}
               </Button>
 
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
