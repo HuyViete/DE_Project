@@ -73,7 +73,12 @@ export async function storeProduct(data, prediction) {
             `INSERT IGNORE INTO batches (batch_id, line_id, quantity) VALUES (?, ?, ?)`,
             [batch_id, line_id, 0]
         );
-        // Optionally update quantity? For now, just ensure it exists.
+        
+        // Update quantity
+        await connection.query(
+            `UPDATE batches SET quantity = quantity + 1 WHERE batch_id = ?`,
+            [batch_id]
+        );
 
         // 5. Insert Product
         // Map attributes to DB columns
