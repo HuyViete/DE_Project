@@ -84,7 +84,8 @@ export const signIn = async (req, res) => {
       message: "Signed in",
       token: accessToken,
       username: user.username,
-      role: user.role
+      role: user.role,
+      warehouseId: user.warehouse_id
     });
   } catch (error) {
     console.error('Fail in sign in!', error);

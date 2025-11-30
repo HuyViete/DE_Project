@@ -5,6 +5,8 @@ import { Server } from "socket.io"
 import authRoute from './routes/authRoute.js'
 import userRoute from './routes/userRoute.js'
 import simulationRoute from './routes/simulationRoute.js'
+import dashboardRoute from './routes/dashboardRoute.js'
+import warehouseRoute from './routes/warehouseRoute.js'
 import { connectDB } from "./libs/db.js";
 import { purgeExpiredSessions } from "./models/Session.js";
 import cookieParser from 'cookie-parser'
@@ -53,6 +55,8 @@ app.use("/api/simulation", simulationRoute); // New route for simulation
 // private route
 app.use(protectedRoute);
 app.use("/api/users", userRoute);
+app.use("/api/dashboard", dashboardRoute);
+app.use("/api/warehouse", warehouseRoute);
 
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);

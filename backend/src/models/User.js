@@ -20,3 +20,7 @@ export async function getUserById(userId) {
   const [rows] = await pool.query(`SELECT * FROM Users WHERE user_id = ?`, [userId])
   return rows[0]
 }
+
+export async function updateUserWarehouse(userId, warehouseId) {
+  await pool.query(`UPDATE Users SET warehouse_id = ? WHERE user_id = ?`, [warehouseId, userId])
+}

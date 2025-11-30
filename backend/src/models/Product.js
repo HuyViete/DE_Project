@@ -38,20 +38,23 @@ export async function storeProduct(data, prediction) {
             batch_id,
             product_id,
             type,
+            warehouse_id,
             ...attributes
         } = data;
 
         // 1. Ensure Warehouse exists
-        const warehouseId = 1;
+        // Use the provided warehouse_id or default to 1
+        const targetWarehouseId = warehouse_id || 1;
+        
         await connection.query(
             `INSERT IGNORE INTO warehouse (warehouse_id, categories) VALUES (?, ?)`,
-            [warehouseId, 'Main Production']
+            [targetWarehouseId, 'Main Production']
         );
 
         // 2. Ensure Line exists
         await connection.query(
             `INSERT IGNORE INTO line (line_id, warehouse_id) VALUES (?, ?)`,
-            [line_id, warehouseId]
+            [line_id, targetWarehouseId]
         );
 
         // 3. Ensure Sensors exist for this line
@@ -141,4 +144,33 @@ export async function storeProduct(data, prediction) {
     } finally {
         connection.release();
     }
+}
+
+export async function getRecentProducts(limit = 50) {
+    const [rows] = await pool.query(`
+        SELECT 
+            p.*,
+            b.line_id,
+            ip.quality_score,
+            ip.quality_category as quality_class,
+            ip.time_predict as timestamp
+        FROM product p
+        JOIN batches b ON p.batch_id = b.batch_id
+        LEFT JOIN is_predicted ip ON p.product_id = ip.product_id
+        ORDER BY ip.time_predict DESC
+        LIMIT ?
+    `, [limit]);
+
+    // Map DB columns back to frontend expected format
+    return rows.map(row => ({
+        ...row,
+        'fixed acidity': row.fixed_acidity,
+        'volatile acidity': row.volatile_acidity,
+        'citric acid': row.citric_acid,
+        'residual sugar': row.residual_sugar,
+        'free sulfur dioxide': row.free_sulfur_dioxide,
+        'total sulfur dioxide': row.total_sulfur_dioxide,
+        // Add default type if missing (since we don't store it yet)
+        type: row.type || 'unknown' 
+    }));
 }

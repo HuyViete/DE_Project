@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useAuthStore } from '../../stores/useAuthStore'
+import { useDashboardStore } from '../../stores/useDashboardStore'
 import Logout from '../../Components/Logout'
 import Header from '../../Components/Header'
 import Typography from '@mui/material/Typography'
@@ -25,103 +26,6 @@ import Alert from '@mui/material/Alert'
 import LinearProgress from '@mui/material/LinearProgress'
 import Tabs from '@mui/material/Tabs'
 import Tab from '@mui/material/Tab'
-
-// Mock data - sẽ thay thế bằng API calls sau
-const mockWarehouseData = {
-  warehouse_id: 1,
-  categories: 'Red Wine Production',
-  total_lines: 3,
-  active_lines: 2,
-  total_batches: 15,
-  total_products: 4520
-}
-
-const mockLinesData = [
-  {
-    line_id: 1,
-    active_date: '2024-11-01',
-    status: 'active',
-    warehouse_id: 1,
-    current_batch: 'BATCH-001',
-    sensors_count: 11,
-    products_today: 245
-  },
-  {
-    line_id: 2,
-    active_date: '2024-11-05',
-    status: 'active',
-    warehouse_id: 1,
-    current_batch: 'BATCH-002',
-    sensors_count: 11,
-    products_today: 198
-  },
-  {
-    line_id: 3,
-    active_date: '2024-10-15',
-    status: 'maintenance',
-    warehouse_id: 1,
-    current_batch: null,
-    sensors_count: 11,
-    products_today: 0
-  }
-]
-
-const mockBatchesData = [
-  {
-    batch_id: 1,
-    batch_name: 'BATCH-001',
-    line_id: 1,
-    start_date: '2024-11-10',
-    status: 'in_progress',
-    products_count: 245,
-    quality_score: 8.5
-  },
-  {
-    batch_id: 2,
-    batch_name: 'BATCH-002',
-    line_id: 2,
-    start_date: '2024-11-12',
-    status: 'in_progress',
-    products_count: 198,
-    quality_score: 8.2
-  },
-  {
-    batch_id: 3,
-    batch_name: 'BATCH-003',
-    line_id: 1,
-    start_date: '2024-11-08',
-    status: 'completed',
-    products_count: 500,
-    quality_score: 8.8
-  }
-]
-
-const mockRecentProducts = [
-  {
-    product_id: 4520,
-    batch_id: 1,
-    alcohol: 12.5,
-    pH: 3.2,
-    quality_status: 'good',
-    timestamp: '2024-11-15 14:30:00'
-  },
-  {
-    product_id: 4519,
-    batch_id: 1,
-    alcohol: 12.3,
-    pH: 3.3,
-    quality_status: 'good',
-    timestamp: '2024-11-15 14:28:00'
-  },
-  {
-    product_id: 4518,
-    batch_id: 2,
-    alcohol: 11.8,
-    pH: 3.4,
-    quality_status: 'warning',
-    timestamp: '2024-11-15 14:25:00'
-  }
-]
 
 // Stat Card Component
 const StatCard = ({ title, value, icon, color = 'primary' }) => (
@@ -153,40 +57,22 @@ const StatCard = ({ title, value, icon, color = 'primary' }) => (
 
 const Dashboard = () => {
   const user = useAuthStore((s) => s.user)
-  const [warehouse, setWarehouse] = useState(null)
-  const [lines, setLines] = useState([])
-  const [batches, setBatches] = useState([])
-  const [recentProducts, setRecentProducts] = useState([])
-  const [loading, setLoading] = useState(false)
+  const { 
+    warehouse, 
+    lines, 
+    batches, 
+    recentProducts, 
+    warehouseInfo, 
+    loading, 
+    fetchDashboardData, 
+    generateToken 
+  } = useDashboardStore()
+  
   const [tabValue, setTabValue] = useState(0)
 
-  // Simulated API calls - sẽ thay thế bằng real API sau
   useEffect(() => {
-    loadDashboardData()
+    fetchDashboardData()
   }, [])
-
-  const loadDashboardData = async () => {
-    setLoading(true)
-    try {
-      // TODO: Replace with actual API calls
-      // const warehouseRes = await api.get('/warehouse/my-warehouse')
-      // const linesRes = await api.get('/lines/my-lines')
-      // const batchesRes = await api.get('/batches/active')
-      // const productsRes = await api.get('/products/recent')
-
-      // Mock data loading
-      setTimeout(() => {
-        setWarehouse(mockWarehouseData)
-        setLines(mockLinesData)
-        setBatches(mockBatchesData)
-        setRecentProducts(mockRecentProducts)
-        setLoading(false)
-      }, 1000)
-    } catch (error) {
-      console.error('Error loading dashboard data:', error)
-      setLoading(false)
-    }
-  }
 
   const getStatusChip = (status) => {
     const statusConfig = {
@@ -201,6 +87,20 @@ const Dashboard = () => {
     }
     const config = statusConfig[status] || { label: status, color: 'default' }
     return <Chip label={config.label} color={config.color} size="small" />
+  }
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '-'
+    return new Date(dateString).toLocaleDateString()
+  }
+
+  const formatDateTime = (dateString) => {
+    if (!dateString) return '-'
+    return new Date(dateString).toLocaleString()
+  }
+
+  const handleGenerateToken = async () => {
+    await generateToken()
   }
 
   return (
@@ -266,14 +166,21 @@ const Dashboard = () => {
         {warehouse && (
           <Card sx={{ mb: 3 }}>
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <WarehouseIcon sx={{ mr: 1, color: 'primary.main' }} />
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                  Warehouse Information
-                </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <WarehouseIcon sx={{ mr: 1, color: 'primary.main' }} />
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                    Warehouse Information
+                  </Typography>
+                </Box>
+                {warehouseInfo?.isOwner && (
+                  <Button variant="contained" onClick={handleGenerateToken}>
+                    Share Warehouse
+                  </Button>
+                )}
               </Box>
               <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
+                <Grid item xs={12} md={4}>
                   <Typography variant="body2" color="text.secondary">
                     Warehouse ID
                   </Typography>
@@ -281,7 +188,7 @@ const Dashboard = () => {
                     {warehouse.warehouse_id}
                   </Typography>
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid item xs={12} md={4}>
                   <Typography variant="body2" color="text.secondary">
                     Category
                   </Typography>
@@ -289,6 +196,16 @@ const Dashboard = () => {
                     {warehouse.categories}
                   </Typography>
                 </Grid>
+                {warehouseInfo?.invitation_token && (
+                  <Grid item xs={12} md={4}>
+                    <Typography variant="body2" color="text.secondary">
+                      Invitation Token (Expires in 24h)
+                    </Typography>
+                    <Typography variant="body1" sx={{ fontWeight: 500, color: 'primary.main' }}>
+                      {warehouseInfo.invitation_token}
+                    </Typography>
+                  </Grid>
+                )}
               </Grid>
             </CardContent>
           </Card>
@@ -328,7 +245,7 @@ const Dashboard = () => {
                       <TableRow key={line.line_id}>
                         <TableCell>Line {line.line_id}</TableCell>
                         <TableCell>{getStatusChip(line.status)}</TableCell>
-                        <TableCell>{line.active_date}</TableCell>
+                        <TableCell>{formatDate(line.active_date)}</TableCell>
                         <TableCell>{line.current_batch || '-'}</TableCell>
                         <TableCell>{line.sensors_count} sensors</TableCell>
                         <TableCell align="right">{line.products_today}</TableCell>
@@ -370,7 +287,7 @@ const Dashboard = () => {
                       <TableRow key={batch.batch_id}>
                         <TableCell sx={{ fontWeight: 500 }}>{batch.batch_name}</TableCell>
                         <TableCell>Line {batch.line_id}</TableCell>
-                        <TableCell>{batch.start_date}</TableCell>
+                        <TableCell>{formatDate(batch.start_date)}</TableCell>
                         <TableCell>{getStatusChip(batch.status)}</TableCell>
                         <TableCell align="right">{batch.products_count}</TableCell>
                         <TableCell align="right">
@@ -421,7 +338,7 @@ const Dashboard = () => {
                         <TableCell>{product.alcohol}%</TableCell>
                         <TableCell>{product.pH}</TableCell>
                         <TableCell>{getStatusChip(product.quality_status)}</TableCell>
-                        <TableCell>{product.timestamp}</TableCell>
+                        <TableCell>{formatDateTime(product.timestamp)}</TableCell>
                         <TableCell align="center">
                           <Button size="small" variant="outlined">
                             Details

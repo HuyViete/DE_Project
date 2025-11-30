@@ -1,5 +1,16 @@
 import axios from 'axios';
-import { storeProduct } from '../models/Product.js';
+import { storeProduct, getRecentProducts } from '../models/Product.js';
+
+export const getRecentSimulationData = async (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 50;
+        const data = await getRecentProducts(limit);
+        res.status(200).json(data);
+    } catch (error) {
+        console.error("Error fetching recent data:", error);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+};
 
 export const processSimulationData = async (req, res) => {
     try {

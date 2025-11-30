@@ -33,6 +33,33 @@ const theme = extendTheme({
         }
       }
     }
+  },
+  components: {
+    MuiCssBaseline: {
+      styleOverrides: {
+        html: {
+          scrollbarWidth: 'none',
+        },
+        body: {
+          scrollbarWidth: 'none',
+        },
+        '#root': {
+          scrollbarWidth: 'none',
+        },
+        // Hide scrollbar for Chrome, Safari and Opera
+        '&::-webkit-scrollbar': {
+          display: 'none',
+        },
+        // Target all elements for Firefox
+        '*': {
+          scrollbarWidth: 'none',
+        },
+        // Target all elements for Chrome/Safari/Edge
+        '*::-webkit-scrollbar': {
+          display: 'none',
+        }
+      }
+    }
   }
 })
 

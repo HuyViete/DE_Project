@@ -6,7 +6,8 @@ export const useAuthStore = create ((set, get) => ({
   accessToken: localStorage.getItem('accessToken') || null,
   user: localStorage.getItem('role') ? {
     username: localStorage.getItem('username'),
-    role: localStorage.getItem('role')
+    role: localStorage.getItem('role'),
+    warehouseId: localStorage.getItem('warehouseId')
   } : null,
   loading: false,
 
@@ -34,7 +35,8 @@ export const useAuthStore = create ((set, get) => ({
         accessToken: data.token,
         user: {
           username: data.username,
-          role: data.role
+          role: data.role,
+          warehouseId: data.warehouseId
         }
       })
 
@@ -44,6 +46,11 @@ export const useAuthStore = create ((set, get) => ({
       localStorage.setItem('accessToken', data.token)
       localStorage.setItem('username', data.username)
       localStorage.setItem('role', data.role)
+      if (data.warehouseId) {
+        localStorage.setItem('warehouseId', data.warehouseId)
+      } else {
+        localStorage.removeItem('warehouseId')
+      }
 
       toast.success('Sign in success!')
       return data.role
@@ -72,6 +79,7 @@ export const useAuthStore = create ((set, get) => ({
       localStorage.removeItem('accessToken')
       localStorage.removeItem('username')
       localStorage.removeItem('role')
+      localStorage.removeItem('warehouseId')
 
       toast.success('Sign out success!')
     } catch (error) {
@@ -79,6 +87,15 @@ export const useAuthStore = create ((set, get) => ({
       toast.error('Fail to sign out')
     } finally {
       set({ loading: false })
+    }
+  },
+
+  updateUserWarehouse: (warehouseId) => {
+    const currentUser = get().user
+    if (currentUser) {
+      const newUser = { ...currentUser, warehouseId }
+      set({ user: newUser })
+      localStorage.setItem('warehouseId', warehouseId)
     }
   }
 }))

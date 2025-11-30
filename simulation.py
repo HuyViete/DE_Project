@@ -2,6 +2,7 @@ import time
 import random
 import requests
 import json
+import argparse
 
 # Configuration
 BACKEND_URL = "http://localhost:5001/api/simulation/data"
@@ -16,7 +17,7 @@ for i in range(1, LINES + 1):
         "product_count": 0
     }
 
-def generate_wine_data(line_id):
+def generate_wine_data(line_id, warehouse_id):
     state = line_states[line_id]
     state["product_count"] += 1
     
@@ -29,10 +30,11 @@ def generate_wine_data(line_id):
     
     # Generate random values within realistic ranges based on the dataset
     data = {
+        "warehouse_id": warehouse_id,
         "line_id": line_id,
         "batch_id": state["batch_id"],
         "product_number": state["product_count"],
-        "product_id": f"L{line_id}B{state['batch_id']}P{state['product_count']}",
+        "product_id": f"W{warehouse_id}L{line_id}B{state['batch_id']}P{state['product_count']}",
         "type": wine_type,
         "fixed acidity": round(random.uniform(5.0, 10.0), 2),
         "volatile acidity": round(random.uniform(0.1, 1.0), 2),
@@ -49,15 +51,20 @@ def generate_wine_data(line_id):
     return data
 
 def main():
-    print(f"Starting simulation. Sending data to {BACKEND_URL} every {INTERVAL} seconds.")
+    parser = argparse.ArgumentParser(description='Wine Production Simulation')
+    parser.add_argument('--warehouse', type=int, default=1, help='Warehouse ID to stream data to')
+    args = parser.parse_args()
+    
+    warehouse_id = args.warehouse
+    print(f"Starting simulation for Warehouse {warehouse_id}. Sending data to {BACKEND_URL} every {INTERVAL} seconds.")
     
     while True:
         try:
             # Simulate a random line producing a bottle
             line_id = random.randint(1, LINES)
-            data = generate_wine_data(line_id)
+            data = generate_wine_data(line_id, warehouse_id)
             
-            print(f"Sending data: Line {data['line_id']} - {data['product_id']} ({data['type']})")
+            print(f"Sending data: Warehouse {data['warehouse_id']} - Line {data['line_id']} - {data['product_id']} ({data['type']})")
             
             response = requests.post(BACKEND_URL, json=data)
             

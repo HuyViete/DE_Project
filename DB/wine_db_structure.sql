@@ -235,7 +235,7 @@ CREATE TABLE `sessions` (
   UNIQUE KEY `uq_refresh_token` (`refresh_token`),
   KEY `idx_user_expires` (`user_id`,`expires_at`),
   CONSTRAINT `fk_sessions_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -310,7 +310,7 @@ CREATE TABLE `users` (
   PRIMARY KEY (`user_id`),
   KEY `fk_users_warehouse` (`warehouse_id`),
   CONSTRAINT `fk_users_warehouse` FOREIGN KEY (`warehouse_id`) REFERENCES `warehouse` (`warehouse_id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -321,10 +321,17 @@ DROP TABLE IF EXISTS `warehouse`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `warehouse` (
-  `warehouse_id` int NOT NULL,
+  `warehouse_id` int NOT NULL AUTO_INCREMENT,
   `categories` varchar(50) DEFAULT NULL,
-  PRIMARY KEY (`warehouse_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `owner_id` int unsigned DEFAULT NULL,
+  `invitation_token` varchar(64) DEFAULT NULL,
+  `token_expires_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`warehouse_id`),
+  UNIQUE KEY `uq_invitation_token` (`invitation_token`),
+  KEY `fk_warehouse_owner` (`owner_id`),
+  KEY `idx_warehouse_token` (`invitation_token`),
+  CONSTRAINT `fk_warehouse_owner` FOREIGN KEY (`owner_id`) REFERENCES `users` (`user_id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -336,4 +343,4 @@ CREATE TABLE `warehouse` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-11-30 10:10:43
+-- Dump completed on 2025-11-30 16:36:46

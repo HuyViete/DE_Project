@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { io } from 'socket.io-client'
+import api from '../lib/axios'
 import {
   Box,
   Container,
@@ -22,6 +23,7 @@ import {
   Select,
   MenuItem
 } from '@mui/material'
+import CheckIcon from '@mui/icons-material/Check'
 import {
   Science,
   Opacity,
@@ -40,71 +42,73 @@ const Realtime = () => {
   const [history, setHistory] = useState([])
   const [connected, setConnected] = useState(false)
   const [selectedLine, setSelectedLine] = useState('all')
+  const selectedLineRef = useRef(selectedLine)
 
-  useEffect(() => {
-    const socket = io(SOCKET_URL, {
-      withCredentials: true
-    })
-
-    socket.on('connect', () => {
-      console.log('Connected to socket server')
-      setConnected(true)
-    })
-
-    socket.on('disconnect', () => {
-      console.log('Disconnected from socket server')
-      setConnected(false)
-    })
-
-    socket.on('sensor_update', (data) => {
-      console.log('New data received:', data)
-
-      // Update history with all data
-      setHistory(prev => [data, ...prev].slice(0, 50)) // Keep last 50 records
-
-      // Update current data display based on selection
-      setCurrentData(prev => {
-        // If viewing all lines, always update to show latest from any line
-        if (selectedLine === 'all') return data
-        // If viewing specific line, only update if data matches line
-        if (data.line_id === selectedLine) return data
-        return prev
-      })
-    })
-
-    return () => {
-      socket.disconnect()
-    }
-  }, [selectedLine]) // Re-run effect if selectedLine changes to ensure logic is fresh?
-  // Actually, the socket listener closure might capture old selectedLine if I'm not careful.
-  // Better to use a ref for selectedLine or functional state update if logic was complex,
-  // but here I'm using selectedLine inside the effect.
-  // Wait, if I add selectedLine to dependency array, it will reconnect socket every time I change line.
-  // That's not ideal.
-  // Let's use a ref for selectedLine or filter in the render.
-
-  // Ref approach for socket callback
-  const selectedLineRef = React.useRef(selectedLine)
+  // Update ref when state changes
   useEffect(() => {
     selectedLineRef.current = selectedLine
   }, [selectedLine])
 
+  // Socket connection for status only
   useEffect(() => {
     const socket = io(SOCKET_URL, { withCredentials: true })
     socket.on('connect', () => setConnected(true))
     socket.on('disconnect', () => setConnected(false))
 
-    socket.on('sensor_update', (data) => {
-      setHistory(prev => [data, ...prev].slice(0, 50))
-
-      // Check the ref for current selection
-      if (selectedLineRef.current === 'all' || data.line_id === selectedLineRef.current) {
-        setCurrentData(data)
-      }
-    })
-
     return () => socket.disconnect()
   }, [])
+
+  // Polling data from DB every second
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await api.get('/simulation/recent?limit=50')
+        const data = response.data
+
+        if (data && data.length > 0) {
+          setHistory(data)
+
+          // Determine current data to display based on selection
+          let latestRelevant = null
+          if (selectedLineRef.current === 'all') {
+            latestRelevant = data[0]
+          } else {
+            latestRelevant = data.find(d => d.line_id === selectedLineRef.current)
+          }
+
+          if (latestRelevant) {
+            setCurrentData(latestRelevant)
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching realtime data:', error)
+      }
+    }
+
+    // Initial fetch
+    fetchData()
+
+    // Poll every 1 second
+    const intervalId = setInterval(fetchData, 1000)
+
+    return () => clearInterval(intervalId)
+  }, []) // Empty dependency array to run once and set up interval
+
+  // Effect to update currentData immediately when selectedLine changes
+  useEffect(() => {
+    if (history.length > 0) {
+      let latestRelevant = null
+      if (selectedLine === 'all') {
+        latestRelevant = history[0]
+      } else {
+        latestRelevant = history.find(d => d.line_id === selectedLine)
+      }
+
+      if (latestRelevant) {
+        setCurrentData(latestRelevant)
+      }
+    }
+  }, [selectedLine, history])
 
   const getQualityColor = (score) => {
     if (score >= 7) return 'success'
@@ -113,24 +117,24 @@ const Realtime = () => {
   }
 
   const SensorCard = ({ title, value, unit, icon, color }) => (
-    <Card sx={{ width: 83, height: 72.5, p: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+    <Card sx={{ width: 115, height: 95, p: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
       <CardContent sx={{ p: '6px !important', '&:last-child': { pb: '6px !important' } }}>
         <Box display="flex" alignItems="center" justifyContent="space-between">
-          <Typography variant="caption" color="textSecondary" noWrap sx={{ fontWeight: 500, fontSize: '0.65rem', maxWidth: '50px' }} title={title}>
+          <Typography variant="caption" color="textSecondary" noWrap sx={{ fontWeight: 500, fontSize: '0.8rem', maxWidth: '100px' }} title={title}>
             {title}
           </Typography>
-          {React.cloneElement(icon, { sx: { fontSize: 14, opacity: 0.7 } })}
+          {React.cloneElement(icon, { sx: { fontSize: 18, opacity: 0.7 } })}
         </Box>
-        <Typography variant="body2" component="div" fontWeight="bold" color={color} sx={{ lineHeight: 1.2, fontSize: '0.9rem', mt: 0.5 }}>
+        <Typography variant="body2" component="div" fontWeight="bold" color={color} sx={{ lineHeight: 1.2, fontSize: '1.5rem', mt: 0.5 }}>
           {value}
         </Typography>
-        <Typography component="div" variant="caption" color="textSecondary" sx={{ fontSize: '0.6rem', lineHeight: 1 }}>{unit}</Typography>
+        <Typography component="div" variant="caption" color="textSecondary" sx={{ fontSize: '0.8rem', lineHeight: 1 }}>{unit}</Typography>
       </CardContent>
     </Card>
   )
 
   return (
-    <Box>
+    <Box sx={{ height: '100vh' }}>
       <Header />
       <Toolbar />
       <Container maxWidth={false} sx={{ mt: 2, mb: 2 }}>
@@ -158,28 +162,28 @@ const Realtime = () => {
           <Chip
             label={connected ? 'System Online' : 'Disconnected'}
             color={connected ? 'success' : 'error'}
-            variant="outlined"
-            size="small"
+            icon={<CheckIcon />}
+            size="medium"
           />
         </Box>
 
         {currentData ? (
           <Grid container spacing={2}>
             {/* Top Section: AI Prediction & Sensors */}
-            <Grid item xs={12}>
-              <Box display="flex" flexWrap="wrap" gap={1}>
+            <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'center' }}>
+              <Box display="flex" flexWrap="wrap" gap={1} justifyContent="center">
                 {/* AI Prediction Cards */}
                 <SensorCard
                   title="Quality Score"
                   value={currentData.quality_score?.toFixed(1)}
-                  unit=""
+                  unit="/10"
                   icon={<Assessment color="primary" />}
                   color={getQualityColor(currentData.quality_score) + '.main'}
                 />
                 <SensorCard
                   title="Quality Class"
                   value={currentData.quality_class}
-                  unit=""
+                  unit="/10"
                   icon={<Assessment color="primary" />}
                   color={getQualityColor(currentData.quality_score) + '.main'}
                 />
@@ -266,16 +270,16 @@ const Realtime = () => {
             </Grid>
 
             {/* History Table */}
-            <Grid item xs={12}>
+            <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
               <Paper sx={{ width: '100%', overflow: 'hidden', mt: 1 }}>
                 <Box p={2} pb={1}>
-                  <Typography variant="h6" component="div">
+                  <Typography variant="h6" fontWeight={900} component="div">
                     Recent Readings Log
                   </Typography>
                 </Box>
                 <TableContainer sx={{ maxHeight: 'calc(100vh - 300px)' }}>
                   <Table stickyHeader size="small" aria-label="sticky table">
-                    <TableHead>
+                    <TableHead sx={{ fontWeight: 900 }}>
                       <TableRow>
                         <TableCell>Time</TableCell>
                         {selectedLine === 'all' && <TableCell>Line</TableCell>}

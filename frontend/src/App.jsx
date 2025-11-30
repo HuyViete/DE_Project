@@ -15,6 +15,7 @@ const EngineerDashboard = React.lazy(() => import('./Pages/Engineer/Dashboard'))
 const ManagerDashboard = React.lazy(() => import('./Pages/Manager/Dashboard'))
 const TesterDashboard = React.lazy(() => import('./Pages/Tester/Dashboard'))
 const Realtime = React.lazy(() => import('./Pages/realtime'))
+const WarehouseSetup = React.lazy(() => import('./Pages/WarehouseSetup'))
 
 const PageLoader = () => (
   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -27,6 +28,9 @@ const DashboardWrapper = () => {
   const role = user?.role
 
   if (!role) return <Navigate to='/login' replace />
+  
+  // If user has no warehouse, redirect to setup
+  if (!user.warehouseId) return <Navigate to='/setup-warehouse' replace />
 
   if (role === 'engineer') return <EngineerDashboard />
   if (role === 'manager') return <ManagerDashboard />
@@ -48,6 +52,7 @@ export default function App() {
           <Route path='/about' element={<About />} />
 
           <Route element={<ProtectedRoute/>}>
+            <Route path='/setup-warehouse' element={<WarehouseSetup />} />
             <Route path='/dashboard' element={<DashboardWrapper />} />
             <Route path='/realtime' element={<Realtime />} />
           </Route>
