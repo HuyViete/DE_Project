@@ -1,7 +1,10 @@
 import express from "express"
 import cors from "cors"
+import http from "http"
+import { Server } from "socket.io"
 import authRoute from './routes/authRoute.js'
 import userRoute from './routes/userRoute.js'
+import simulationRoute from './routes/simulationRoute.js'
 import { connectDB } from "./libs/db.js";
 import { purgeExpiredSessions } from "./models/Session.js";
 import cookieParser from 'cookie-parser'
@@ -13,12 +16,23 @@ dotenv.config();
 const PORT = process.env.PORT || 5001;
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    methods: ["GET", "POST"],
+    credentials: true
+  }
+});
+
+// Make io accessible in routes
+app.set('io', io);
 
 connectDB();
 
 // middleware
 app.use(cors({
-  origin: process.env.CLIENT_URL,
+  origin: process.env.CLIENT_URL || "http://localhost:5173",
   credentials: true
 }));
 app.use(express.json());
@@ -34,11 +48,19 @@ setInterval(async () => {
 
 // public route
 app.use("/api/auth", authRoute);
+app.use("/api/simulation", simulationRoute); // New route for simulation
 
 // private route
 app.use(protectedRoute);
 app.use("/api/users", userRoute);
 
-app.listen(PORT, () => {
+io.on('connection', (socket) => {
+  console.log('A user connected:', socket.id);
+  socket.on('disconnect', () => {
+    console.log('User disconnected:', socket.id);
+  });
+});
+
+server.listen(PORT, () => {
   console.log(`Server runs at port ${PORT}`)
 })

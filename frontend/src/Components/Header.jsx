@@ -2,6 +2,7 @@ import ComputerIcon from '@mui/icons-material/Computer'
 import DarkModeIcon from '@mui/icons-material/DarkMode'
 import LightModeIcon from '@mui/icons-material/LightMode'
 import NotificationsIcon from '@mui/icons-material/Notifications'
+import LogoutIcon from '@mui/icons-material/Logout'
 import AppBar from '@mui/material/AppBar'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
@@ -14,11 +15,13 @@ import SearchIcon from '@mui/icons-material/Search'
 import InputBase from '@mui/material/InputBase'
 import IconButton from '@mui/material/IconButton'
 import Badge from '@mui/material/Badge'
+import Tooltip from '@mui/material/Tooltip'
 
 import { useColorScheme, styled, alpha } from '@mui/material/styles'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 import theme from '../theme'
+import { useAuthStore } from '../stores/useAuthStore'
 
 function ModeSwitcher() {
   const { mode, setMode } = useColorScheme()
@@ -133,9 +136,16 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 function Header() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { signOut } = useAuthStore()
+
+  const handleLogout = async () => {
+    await signOut()
+    navigate('/login')
+  }
 
   const navItems = [
     { label: 'Dashboard', path: '/dashboard' },
+    { label: 'Realtime', path: '/realtime' },
     { label: 'Log', path: '/log' }
   ]
 
@@ -202,6 +212,16 @@ function Header() {
             </Badge>
           </IconButton>
           <ModeSwitcher />
+          <Tooltip title="Logout">
+            <IconButton
+              size="large"
+              color="inherit"
+              onClick={handleLogout}
+              sx={{ ml: 1 }}
+            >
+              <LogoutIcon />
+            </IconButton>
+          </Tooltip>
         </Box>
       </Toolbar>
     </AppBar>

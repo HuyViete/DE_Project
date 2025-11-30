@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router'
 const Logout = () => {
   const signOut = useAuthStore((state) => state.signOut)
   const navigate = useNavigate()
-  
+
   const handleLogout = async () => {
     console.log('Logout clicked!')
     try {
@@ -18,7 +18,7 @@ const Logout = () => {
       console.error('Logout error:', error)
     }
   }
-  
+
   return (
     <Button
       onClick={handleLogout}

@@ -14,6 +14,7 @@ const Signup = React.lazy(() => import('./Pages/Signup'))
 const EngineerDashboard = React.lazy(() => import('./Pages/Engineer/Dashboard'))
 const ManagerDashboard = React.lazy(() => import('./Pages/Manager/Dashboard'))
 const TesterDashboard = React.lazy(() => import('./Pages/Tester/Dashboard'))
+const Realtime = React.lazy(() => import('./Pages/realtime'))
 
 const PageLoader = () => (
   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -48,6 +49,7 @@ export default function App() {
 
           <Route element={<ProtectedRoute/>}>
             <Route path='/dashboard' element={<DashboardWrapper />} />
+            <Route path='/realtime' element={<Realtime />} />
           </Route>
 
         </Routes>

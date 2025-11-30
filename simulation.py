@@ -1,0 +1,78 @@
+import time
+import random
+import requests
+import json
+
+# Configuration
+BACKEND_URL = "http://localhost:5001/api/simulation/data"
+INTERVAL = 0.5  # Seconds between requests
+
+# Simulation State
+LINES = 6
+line_states = {}
+for i in range(1, LINES + 1):
+    line_states[i] = {
+        "batch_id": random.randint(100, 900),
+        "product_count": 0
+    }
+
+def generate_wine_data(line_id):
+    state = line_states[line_id]
+    state["product_count"] += 1
+    
+    # Change batch occasionally
+    if state["product_count"] > random.randint(20, 50):
+        state["batch_id"] += 1
+        state["product_count"] = 1
+
+    wine_type = random.choice(['white', 'red'])
+    
+    # Generate random values within realistic ranges based on the dataset
+    data = {
+        "line_id": line_id,
+        "batch_id": state["batch_id"],
+        "product_number": state["product_count"],
+        "product_id": f"L{line_id}B{state['batch_id']}P{state['product_count']}",
+        "type": wine_type,
+        "fixed acidity": round(random.uniform(5.0, 10.0), 2),
+        "volatile acidity": round(random.uniform(0.1, 1.0), 2),
+        "citric acid": round(random.uniform(0.0, 0.8), 2),
+        "residual sugar": round(random.uniform(0.6, 20.0), 2),
+        "chlorides": round(random.uniform(0.01, 0.1), 3),
+        "free sulfur dioxide": round(random.uniform(5, 70), 1),
+        "total sulfur dioxide": round(random.uniform(10, 250), 1),
+        "density": round(random.uniform(0.9900, 1.0050), 4),
+        "pH": round(random.uniform(2.8, 3.8), 2),
+        "sulphates": round(random.uniform(0.3, 1.0), 2),
+        "alcohol": round(random.uniform(8.0, 14.0), 1)
+    }
+    return data
+
+def main():
+    print(f"Starting simulation. Sending data to {BACKEND_URL} every {INTERVAL} seconds.")
+    
+    while True:
+        try:
+            # Simulate a random line producing a bottle
+            line_id = random.randint(1, LINES)
+            data = generate_wine_data(line_id)
+            
+            print(f"Sending data: Line {data['line_id']} - {data['product_id']} ({data['type']})")
+            
+            response = requests.post(BACKEND_URL, json=data)
+            
+            if response.status_code == 200:
+                result = response.json()
+                print(f"[Success] AI Prediction: Quality {result.get('quality_score', 'N/A')}")
+            else:
+                print(f"[Error] {response.status_code}: {response.text}")
+                
+        except requests.exceptions.ConnectionError:
+            print("[Error]: Is the backend server running?")
+        except Exception as e:
+            print(f"[Error]: {e}")
+            
+        time.sleep(INTERVAL)
+
+if __name__ == "__main__":
+    main()
