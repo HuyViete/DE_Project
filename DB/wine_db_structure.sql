@@ -30,6 +30,28 @@ CREATE TABLE `ai_model` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `alert_settings`
+--
+
+DROP TABLE IF EXISTS `alert_settings`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `alert_settings` (
+  `setting_id` int NOT NULL AUTO_INCREMENT,
+  `warehouse_id` int NOT NULL,
+  `metric` varchar(50) NOT NULL,
+  `min_value` float DEFAULT NULL,
+  `max_value` float DEFAULT NULL,
+  `enabled` tinyint(1) DEFAULT '1',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`setting_id`),
+  UNIQUE KEY `unique_warehouse_metric` (`warehouse_id`,`metric`),
+  CONSTRAINT `alert_settings_ibfk_1` FOREIGN KEY (`warehouse_id`) REFERENCES `warehouse` (`warehouse_id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `alerts`
 --
 
@@ -37,16 +59,19 @@ DROP TABLE IF EXISTS `alerts`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `alerts` (
-  `alert_id` int NOT NULL,
+  `alert_id` int NOT NULL AUTO_INCREMENT,
   `product_id` varchar(50) DEFAULT NULL,
   `engineer_id` int DEFAULT NULL,
-  `description` varchar(50) DEFAULT NULL,
+  `description` text,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `is_read` tinyint(1) DEFAULT '0',
+  `warehouse_id` int DEFAULT NULL,
+  `title` varchar(100) DEFAULT NULL,
   PRIMARY KEY (`alert_id`),
   KEY `product_id` (`product_id`),
   KEY `engineer_id` (`engineer_id`),
-  CONSTRAINT `alerts_ibfk_1` FOREIGN KEY (`product_id`) REFERENCES `product` (`product_id`),
-  CONSTRAINT `alerts_ibfk_2` FOREIGN KEY (`engineer_id`) REFERENCES `engineer` (`user_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  CONSTRAINT `alerts_ibfk_1` FOREIGN KEY (`product_id`) REFERENCES `product` (`product_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -193,9 +218,15 @@ CREATE TABLE `product` (
   `total_sulfur_dioxide` float DEFAULT NULL,
   `residual_sugar` float DEFAULT NULL,
   `batch_id` int DEFAULT NULL,
+  `warehouse_id` int DEFAULT NULL,
+  `line_id` int DEFAULT NULL,
   PRIMARY KEY (`product_id`),
   KEY `batch_id` (`batch_id`),
-  CONSTRAINT `product_ibfk_1` FOREIGN KEY (`batch_id`) REFERENCES `batches` (`batch_id`)
+  KEY `warehouse_id` (`warehouse_id`),
+  KEY `line_id` (`line_id`),
+  CONSTRAINT `product_ibfk_1` FOREIGN KEY (`batch_id`) REFERENCES `batches` (`batch_id`),
+  CONSTRAINT `product_ibfk_2` FOREIGN KEY (`warehouse_id`) REFERENCES `warehouse` (`warehouse_id`),
+  CONSTRAINT `product_ibfk_3` FOREIGN KEY (`line_id`) REFERENCES `line` (`line_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -235,7 +266,7 @@ CREATE TABLE `sessions` (
   UNIQUE KEY `uq_refresh_token` (`refresh_token`),
   KEY `idx_user_expires` (`user_id`,`expires_at`),
   CONSTRAINT `fk_sessions_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=37 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -310,7 +341,7 @@ CREATE TABLE `users` (
   PRIMARY KEY (`user_id`),
   KEY `fk_users_warehouse` (`warehouse_id`),
   CONSTRAINT `fk_users_warehouse` FOREIGN KEY (`warehouse_id`) REFERENCES `warehouse` (`warehouse_id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -331,7 +362,7 @@ CREATE TABLE `warehouse` (
   KEY `fk_warehouse_owner` (`owner_id`),
   KEY `idx_warehouse_token` (`invitation_token`),
   CONSTRAINT `fk_warehouse_owner` FOREIGN KEY (`owner_id`) REFERENCES `users` (`user_id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -343,4 +374,4 @@ CREATE TABLE `warehouse` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-11-30 16:36:46
+-- Dump completed on 2025-12-01 12:35:48

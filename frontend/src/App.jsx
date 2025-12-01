@@ -6,6 +6,7 @@ import { useAuthStore } from './stores/useAuthStore'
 // --- CÁC COMPONENT TĨNH ---
 import Login from './Pages/Login'
 import ProtectedRoute from './Components/auth/ProtectedRoute'
+import Notification from './Pages/notification'
 
 const Help = React.lazy(() => import('./pages/Help'))
 const About = React.lazy(() => import('./pages/About'))
@@ -28,7 +29,7 @@ const DashboardWrapper = () => {
   const role = user?.role
 
   if (!role) return <Navigate to='/login' replace />
-  
+
   // If user has no warehouse, redirect to setup
   if (!user.warehouseId) return <Navigate to='/setup-warehouse' replace />
 
@@ -55,6 +56,7 @@ export default function App() {
             <Route path='/setup-warehouse' element={<WarehouseSetup />} />
             <Route path='/dashboard' element={<DashboardWrapper />} />
             <Route path='/realtime' element={<Realtime />} />
+            <Route path='/notification' element={<Notification />} />
           </Route>
 
         </Routes>

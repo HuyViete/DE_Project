@@ -22,6 +22,8 @@ import { useLocation, useNavigate } from 'react-router-dom'
 
 import theme from '../theme'
 import { useAuthStore } from '../stores/useAuthStore'
+import { useAlertStore } from '../stores/useAlertStore'
+import { useEffect } from 'react'
 
 function ModeSwitcher() {
   const { mode, setMode } = useColorScheme()
@@ -137,6 +139,12 @@ function Header() {
   const navigate = useNavigate()
   const location = useLocation()
   const { signOut } = useAuthStore()
+  const { unreadCount, fetchAlerts, connectSocket } = useAlertStore()
+
+  useEffect(() => {
+    fetchAlerts()
+    connectSocket()
+  }, [])
 
   const handleLogout = async () => {
     await signOut()
@@ -146,6 +154,7 @@ function Header() {
   const navItems = [
     { label: 'Dashboard', path: '/dashboard' },
     { label: 'Realtime', path: '/realtime' },
+    { label: 'Alert', path: '/notification' },
     { label: 'Log', path: '/log' }
   ]
 
@@ -204,10 +213,11 @@ function Header() {
           </Search>
           <IconButton
             size="large"
-            aria-label="show 17 new notifications"
+            aria-label={`show ${unreadCount} new notifications`}
             color="inherit"
+            onClick={() => navigate('/notification')}
           >
-            <Badge badgeContent={17} color="error">
+            <Badge badgeContent={unreadCount} color="error">
               <NotificationsIcon />
             </Badge>
           </IconButton>

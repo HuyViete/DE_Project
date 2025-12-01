@@ -7,6 +7,7 @@ import userRoute from './routes/userRoute.js'
 import simulationRoute from './routes/simulationRoute.js'
 import dashboardRoute from './routes/dashboardRoute.js'
 import warehouseRoute from './routes/warehouseRoute.js'
+import alertRoute from './routes/alertRoute.js'
 import { connectDB } from "./libs/db.js";
 import { purgeExpiredSessions } from "./models/Session.js";
 import cookieParser from 'cookie-parser'
@@ -57,9 +58,19 @@ app.use(protectedRoute);
 app.use("/api/users", userRoute);
 app.use("/api/dashboard", dashboardRoute);
 app.use("/api/warehouse", warehouseRoute);
+app.use("/api/alerts", alertRoute);
 
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
+  
+  socket.on('join_warehouse', (warehouseId) => {
+    if (warehouseId) {
+      const room = `warehouse_${warehouseId}`;
+      socket.join(room);
+      console.log(`Socket ${socket.id} joined room ${room}`);
+    }
+  });
+
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
   });

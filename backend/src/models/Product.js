@@ -85,8 +85,8 @@ export async function storeProduct(data, prediction) {
 
         // 5. Insert Product
         // Map attributes to DB columns
-        const productColumns = ['product_id', 'batch_id'];
-        const productValues = [product_id, batch_id];
+        const productColumns = ['product_id', 'batch_id', 'warehouse_id', 'line_id'];
+        const productValues = [product_id, batch_id, targetWarehouseId, line_id];
 
         for (const [key, dbCol] of Object.entries(ATTRIBUTE_MAP)) {
             if (attributes[key] !== undefined) {
@@ -96,7 +96,7 @@ export async function storeProduct(data, prediction) {
         }
 
         const placeholders = productValues.map(() => '?').join(', ');
-        const sql = `INSERT INTO product (${productColumns.join(', ')}) VALUES (${placeholders})`;
+        const sql = `INSERT INTO product (${productColumns.join(', ')}) VALUES (${placeholders}) ON DUPLICATE KEY UPDATE product_id=product_id`;
         
         await connection.query(sql, productValues);
 
@@ -105,10 +105,18 @@ export async function storeProduct(data, prediction) {
             const attr = attributeKeys[i];
             if (attributes[attr] !== undefined) {
                 const sensorId = line_id * 1000 + (i + 1);
-                await connection.query(
-                    `INSERT INTO measure (product_id, sensor_id, value) VALUES (?, ?, ?)`,
-                    [product_id, sensorId, attributes[attr]]
+                // Check if measure exists first to avoid duplicates
+                const [existingMeasure] = await connection.query(
+                    `SELECT 1 FROM measure WHERE product_id = ? AND sensor_id = ?`,
+                    [product_id, sensorId]
                 );
+                
+                if (existingMeasure.length === 0) {
+                    await connection.query(
+                        `INSERT INTO measure (product_id, sensor_id, value) VALUES (?, ?, ?)`,
+                        [product_id, sensorId, attributes[attr]]
+                    );
+                }
             }
         }
 
@@ -121,17 +129,25 @@ export async function storeProduct(data, prediction) {
 
         // 8. Insert Prediction
         if (prediction) {
-            await connection.query(
-                `INSERT INTO is_predicted (time_predict, quality_score, confidence, quality_category, product_id, AI_model) 
-                 VALUES (NOW(), ?, ?, ?, ?, ?)`,
-                [
-                    prediction.quality_score, 
-                    'High', // Mock confidence or calculate it
-                    prediction.quality_class.toString(), 
-                    product_id, 
-                    modelId
-                ]
+            // Check if prediction exists
+            const [existingPred] = await connection.query(
+                `SELECT 1 FROM is_predicted WHERE product_id = ?`,
+                [product_id]
             );
+
+            if (existingPred.length === 0) {
+                await connection.query(
+                    `INSERT INTO is_predicted (time_predict, quality_score, confidence, quality_category, product_id, AI_model) 
+                     VALUES (NOW(), ?, ?, ?, ?, ?)`,
+                    [
+                        prediction.quality_score, 
+                        'High', // Mock confidence or calculate it
+                        prediction.quality_class.toString(), 
+                        product_id, 
+                        modelId
+                    ]
+                );
+            }
         }
 
         await connection.commit();
@@ -146,20 +162,30 @@ export async function storeProduct(data, prediction) {
     }
 }
 
-export async function getRecentProducts(limit = 50) {
-    const [rows] = await pool.query(`
+export async function getRecentProducts(limit = 50, warehouseId = null) {
+    let query = `
         SELECT 
             p.*,
-            b.line_id,
+            p.line_id,
+            p.warehouse_id,
             ip.quality_score,
             ip.quality_category as quality_class,
             ip.time_predict as timestamp
         FROM product p
-        JOIN batches b ON p.batch_id = b.batch_id
-        LEFT JOIN is_predicted ip ON p.product_id = ip.product_id
-        ORDER BY ip.time_predict DESC
-        LIMIT ?
-    `, [limit]);
+        JOIN is_predicted ip ON p.product_id = ip.product_id
+    `;
+    
+    const params = [];
+    
+    if (warehouseId) {
+        query += ` WHERE p.warehouse_id = ?`;
+        params.push(warehouseId);
+    }
+    
+    query += ` ORDER BY ip.time_predict DESC LIMIT ?`;
+    params.push(limit);
+
+    const [rows] = await pool.query(query, params);
 
     // Map DB columns back to frontend expected format
     return rows.map(row => ({

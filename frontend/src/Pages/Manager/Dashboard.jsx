@@ -57,17 +57,17 @@ const StatCard = ({ title, value, icon, color = 'primary' }) => (
 
 const Dashboard = () => {
   const user = useAuthStore((s) => s.user)
-  const { 
-    warehouse, 
-    lines, 
-    batches, 
-    recentProducts, 
-    warehouseInfo, 
-    loading, 
-    fetchDashboardData, 
-    generateToken 
+  const {
+    warehouse,
+    lines,
+    batches,
+    recentProducts,
+    warehouseInfo,
+    loading,
+    fetchDashboardData,
+    generateToken
   } = useDashboardStore()
-  
+
   const [tabValue, setTabValue] = useState(0)
 
   useEffect(() => {
@@ -243,7 +243,7 @@ const Dashboard = () => {
                   <TableBody>
                     {lines.map((line) => (
                       <TableRow key={line.line_id}>
-                        <TableCell>Line {line.line_id}</TableCell>
+                        <TableCell>Line {line.line_id % 100}</TableCell>
                         <TableCell>{getStatusChip(line.status)}</TableCell>
                         <TableCell>{formatDate(line.active_date)}</TableCell>
                         <TableCell>{line.current_batch || '-'}</TableCell>
@@ -286,7 +286,7 @@ const Dashboard = () => {
                     {batches.map((batch) => (
                       <TableRow key={batch.batch_id}>
                         <TableCell sx={{ fontWeight: 500 }}>{batch.batch_name}</TableCell>
-                        <TableCell>Line {batch.line_id}</TableCell>
+                        <TableCell>Line {batch.line_id % 100}</TableCell>
                         <TableCell>{formatDate(batch.start_date)}</TableCell>
                         <TableCell>{getStatusChip(batch.status)}</TableCell>
                         <TableCell align="right">{batch.products_count}</TableCell>

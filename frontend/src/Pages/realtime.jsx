@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { io } from 'socket.io-client'
 import api from '../lib/axios'
+import { useAuthStore } from '../stores/useAuthStore'
 import {
   Box,
   Container,
@@ -38,6 +39,8 @@ import Header from '../Components/Header'
 const SOCKET_URL = 'http://localhost:5001'
 
 const Realtime = () => {
+  const { user } = useAuthStore()
+  const warehouseId = user?.warehouseId
   const [currentData, setCurrentData] = useState(null)
   const [history, setHistory] = useState([])
   const [connected, setConnected] = useState(false)
@@ -52,17 +55,23 @@ const Realtime = () => {
   // Socket connection for status only
   useEffect(() => {
     const socket = io(SOCKET_URL, { withCredentials: true })
-    socket.on('connect', () => setConnected(true))
+    socket.on('connect', () => {
+      setConnected(true)
+      if (warehouseId) {
+        socket.emit('join_warehouse', warehouseId)
+      }
+    })
     socket.on('disconnect', () => setConnected(false))
 
     return () => socket.disconnect()
-  }, [])
+  }, [warehouseId])
 
   // Polling data from DB every second
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await api.get('/simulation/recent?limit=50')
+        const url = `/simulation/recent?limit=50${warehouseId ? `&warehouse_id=${warehouseId}` : ''}`
+        const response = await api.get(url)
         const data = response.data
 
         if (data && data.length > 0) {
@@ -92,7 +101,7 @@ const Realtime = () => {
     const intervalId = setInterval(fetchData, 1000)
 
     return () => clearInterval(intervalId)
-  }, []) // Empty dependency array to run once and set up interval
+  }, [warehouseId]) // Re-run when warehouseId changes
 
   // Effect to update currentData immediately when selectedLine changes
   useEffect(() => {
@@ -153,9 +162,12 @@ const Realtime = () => {
                 onChange={(e) => setSelectedLine(e.target.value)}
               >
                 <MenuItem value="all">All Lines</MenuItem>
-                {[1, 2, 3, 4, 5, 6].map((line) => (
-                  <MenuItem key={line} value={line}>Line {line}</MenuItem>
-                ))}
+                {[1, 2, 3, 4, 5, 6].map((lineNum) => {
+                  const lineId = (warehouseId ? parseInt(warehouseId) : 1) * 100 + lineNum
+                  return (
+                    <MenuItem key={lineId} value={lineId}>Line {lineNum}</MenuItem>
+                  )
+                })}
               </Select>
             </FormControl>
           </Box>
@@ -308,7 +320,7 @@ const Realtime = () => {
                             <TableCell>{new Date(row.timestamp).toLocaleTimeString()}</TableCell>
                             {selectedLine === 'all' && (
                               <TableCell>
-                                <Chip label={`Line ${row.line_id}`} size="small" variant="outlined" />
+                                <Chip label={`Line ${row.line_id % 100}`} size="small" variant="outlined" />
                               </TableCell>
                             )}
                             <TableCell sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}>

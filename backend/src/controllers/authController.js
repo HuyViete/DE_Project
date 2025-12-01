@@ -57,6 +57,8 @@ export const signIn = async (req, res) => {
       return res.status(401).json({message: "Username or Password is incorrect!"})
     }
     
+    console.log('Login user:', user);
+
     const match = await bcrypt.compare(password, user.password);
     if (!match) {
       return res.status(401).json({message: "Username or Password is incorrect!"})

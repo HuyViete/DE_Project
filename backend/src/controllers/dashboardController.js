@@ -2,8 +2,13 @@ import { pool } from '../libs/db.js';
 
 export const getWarehouseStats = async (req, res) => {
     try {
-        // Assuming single warehouse for now or getting the first one
-        const [warehouses] = await pool.query('SELECT * FROM warehouse LIMIT 1');
+        const warehouseId = req.user.warehouse_id;
+        
+        if (!warehouseId) {
+            return res.status(400).json({ message: 'User not attached to a warehouse' });
+        }
+
+        const [warehouses] = await pool.query('SELECT * FROM warehouse WHERE warehouse_id = ?', [warehouseId]);
         const warehouse = warehouses[0];
 
         if (!warehouse) {
@@ -11,8 +16,21 @@ export const getWarehouseStats = async (req, res) => {
         }
 
         const [linesCount] = await pool.query('SELECT COUNT(*) as count FROM line WHERE warehouse_id = ?', [warehouse.warehouse_id]);
-        const [batchesCount] = await pool.query('SELECT COUNT(*) as count FROM batches');
-        const [productsCount] = await pool.query('SELECT COUNT(*) as count FROM product');
+        
+        const [batchesCount] = await pool.query(`
+            SELECT COUNT(*) as count 
+            FROM batches b
+            JOIN line l ON b.line_id = l.line_id
+            WHERE l.warehouse_id = ?
+        `, [warehouse.warehouse_id]);
+
+        const [productsCount] = await pool.query(`
+            SELECT COUNT(*) as count 
+            FROM product p
+            JOIN batches b ON p.batch_id = b.batch_id
+            JOIN line l ON b.line_id = l.line_id
+            WHERE l.warehouse_id = ?
+        `, [warehouse.warehouse_id]);
         
         // Active lines: Lines that have produced something in the last 24 hours
         // Or simply lines that have an active batch. Let's say lines that have a batch with quantity > 0 and recent product?
@@ -21,10 +39,11 @@ export const getWarehouseStats = async (req, res) => {
         // Active lines could be those with recent activity.
         // Let's query lines that have a batch created in the last 7 days.
         const [activeLines] = await pool.query(`
-            SELECT COUNT(DISTINCT line_id) as count 
-            FROM batches 
-            WHERE producted_date >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-        `);
+            SELECT COUNT(DISTINCT b.line_id) as count 
+            FROM batches b
+            JOIN line l ON b.line_id = l.line_id
+            WHERE l.warehouse_id = ? AND b.producted_date >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+        `, [warehouse.warehouse_id]);
 
         res.json({
             warehouse_id: warehouse.warehouse_id,
@@ -42,7 +61,8 @@ export const getWarehouseStats = async (req, res) => {
 
 export const getLinesStatus = async (req, res) => {
     try {
-        const [lines] = await pool.query('SELECT * FROM line');
+        const warehouseId = req.user.warehouse_id;
+        const [lines] = await pool.query('SELECT * FROM line WHERE warehouse_id = ?', [warehouseId]);
         
         const linesData = await Promise.all(lines.map(async (line) => {
             // Get sensor count
@@ -82,14 +102,16 @@ export const getLinesStatus = async (req, res) => {
 
 export const getActiveBatches = async (req, res) => {
     try {
+        const warehouseId = req.user.warehouse_id;
         // Get recent batches (e.g., last 20)
         const [batches] = await pool.query(`
             SELECT b.*, l.warehouse_id 
             FROM batches b
             JOIN line l ON b.line_id = l.line_id
+            WHERE l.warehouse_id = ?
             ORDER BY b.producted_date DESC 
             LIMIT 20
-        `);
+        `, [warehouseId]);
 
         const batchesData = await Promise.all(batches.map(async (batch) => {
             // Calculate average quality score
@@ -120,6 +142,7 @@ export const getActiveBatches = async (req, res) => {
 
 export const getRecentProducts = async (req, res) => {
     try {
+        const warehouseId = req.user.warehouse_id;
         const [products] = await pool.query(`
             SELECT 
                 p.product_id, 
@@ -129,10 +152,11 @@ export const getRecentProducts = async (req, res) => {
                 ip.quality_score, 
                 ip.time_predict as timestamp
             FROM product p
-            LEFT JOIN is_predicted ip ON p.product_id = ip.product_id
+            JOIN is_predicted ip ON p.product_id = ip.product_id
+            WHERE p.warehouse_id = ?
             ORDER BY ip.time_predict DESC
             LIMIT 20
-        `);
+        `, [warehouseId]);
 
         const productsData = products.map(p => ({
             product_id: p.product_id,

@@ -6,7 +6,7 @@ import argparse
 
 # Configuration
 BACKEND_URL = "http://localhost:5001/api/simulation/data"
-INTERVAL = 0.5  # Seconds between requests
+INTERVAL = 3.0  # Seconds between requests
 
 # Simulation State
 LINES = 6
@@ -61,8 +61,23 @@ def main():
     while True:
         try:
             # Simulate a random line producing a bottle
-            line_id = random.randint(1, LINES)
-            data = generate_wine_data(line_id, warehouse_id)
+            line_number = random.randint(1, LINES)
+            line_id = warehouse_id * 100 + line_number
+            
+            # We need to maintain state for the logical line number, not the absolute line_id
+            # But the generate_wine_data function uses line_id to look up state.
+            # Let's adjust generate_wine_data to take line_number and use it for state, 
+            # but return data with the calculated line_id.
+            
+            # Actually, let's just update the state dictionary to use the new line_ids
+            # But we don't know the warehouse_id at the top level where line_states is defined.
+            # So let's move state management inside main or make it dynamic.
+            
+            data = generate_wine_data(line_number, warehouse_id)
+            # Override line_id in data
+            data['line_id'] = line_id
+            # Update product_id to reflect new line_id
+            data['product_id'] = f"W{warehouse_id}L{line_id}B{data['batch_id']}P{data['product_number']}"
             
             print(f"Sending data: Warehouse {data['warehouse_id']} - Line {data['line_id']} - {data['product_id']} ({data['type']})")
             
