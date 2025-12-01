@@ -4,6 +4,8 @@
 -- ------------------------------------------------------
 -- Server version	8.0.44
 
+use wine_production;
+
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
@@ -82,16 +84,19 @@ DROP TABLE IF EXISTS `auditlog`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `auditlog` (
-  `log_id` int NOT NULL,
+  `log_id` int NOT NULL auto_increment,
   `time_log` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `description` varchar(50) DEFAULT NULL,
+  `event` varchar(255) not null,
+  `description` text DEFAULT NULL,
   `warehouse_id` int DEFAULT NULL,
   `engineer_id` int DEFAULT NULL,
+  -- `manager_id` int DEFAULT NULL,
   PRIMARY KEY (`log_id`),
   KEY `warehouse_id` (`warehouse_id`),
   KEY `engineer_id` (`engineer_id`),
   CONSTRAINT `auditlog_ibfk_1` FOREIGN KEY (`warehouse_id`) REFERENCES `warehouse` (`warehouse_id`),
   CONSTRAINT `auditlog_ibfk_2` FOREIGN KEY (`engineer_id`) REFERENCES `engineer` (`user_id`)
+  -- CONSTRAINT `auditlog_ibfk_3` FOREIGN KEY (`manager_id`) REFERENCES `monitor` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
