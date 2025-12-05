@@ -6,7 +6,7 @@ import argparse
 
 # Configuration
 BACKEND_URL = "http://localhost:5001/api/simulation/data"
-INTERVAL = 3.0  # Seconds between requests
+INTERVAL = 1.0  # Seconds between requests
 
 # Simulation State
 LINES = 6

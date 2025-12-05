@@ -4,6 +4,7 @@ import { Box, Button, Card, CardContent, TextField, Typography, Divider, Stack }
 import { warehouseService } from '../Services/warehouseService'
 import { useAuthStore } from '../stores/useAuthStore'
 import { toast } from 'sonner'
+import Footer from '../Components/Footer'
 
 export default function WarehouseSetup() {
   const navigate = useNavigate()
@@ -47,11 +48,16 @@ export default function WarehouseSetup() {
     <Box sx={{
       minHeight: '100vh',
       display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
+      flexDirection: 'column',
       bgcolor: 'background.default'
     }}>
-      <Card sx={{ maxWidth: 600, width: '100%', p: 2 }}>
+      <Box sx={{
+        flexGrow: 1,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <Card sx={{ maxWidth: 600, width: '100%', p: 2 }}>
         <CardContent>
           <Typography variant="h4" gutterBottom align="center">
             Welcome!
@@ -107,6 +113,8 @@ export default function WarehouseSetup() {
           </Stack>
         </CardContent>
       </Card>
+      </Box>
+      <Footer />
     </Box>
   )
 }

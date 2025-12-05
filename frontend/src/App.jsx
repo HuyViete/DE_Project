@@ -7,6 +7,7 @@ import { useAuthStore } from './stores/useAuthStore'
 import Login from './Pages/Login'
 import ProtectedRoute from './Components/auth/ProtectedRoute'
 import Notification from './Pages/notification'
+import AuditLog from './Pages/AuditLog'
 
 const Help = React.lazy(() => import('./pages/Help'))
 const About = React.lazy(() => import('./pages/About'))
@@ -57,6 +58,7 @@ export default function App() {
             <Route path='/dashboard' element={<DashboardWrapper />} />
             <Route path='/realtime' element={<Realtime />} />
             <Route path='/notification' element={<Notification />} />
+            <Route path='/auditlog' element={<AuditLog />} />
           </Route>
 
         </Routes>

@@ -34,6 +34,7 @@ import {
   Assessment
 } from '@mui/icons-material'
 import Header from '../Components/Header'
+import Footer from '../Components/Footer'
 
 // Connect to backend socket
 const SOCKET_URL = 'http://localhost:5001'
@@ -143,10 +144,10 @@ const Realtime = () => {
   )
 
   return (
-    <Box sx={{ height: '100vh' }}>
+    <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', bgcolor: 'background.default' }}>
       <Header />
       <Toolbar />
-      <Container maxWidth={false} sx={{ mt: 2, mb: 2 }}>
+      <Container maxWidth={false} sx={{ mt: 2, mb: 2, flexGrow: 1 }}>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
           <Box display="flex" alignItems="center" gap={2}>
             <Typography variant="h5" component="h1" fontWeight="bold">
@@ -372,6 +373,8 @@ const Realtime = () => {
           </Box>
         )}
       </Container>
+
+      <Footer />
     </Box>
   )
 }
