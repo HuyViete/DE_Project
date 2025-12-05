@@ -3,6 +3,7 @@ import { useAuthStore } from '../../stores/useAuthStore'
 import { useDashboardStore } from '../../stores/useDashboardStore'
 import Logout from '../../Components/Logout'
 import Header from '../../Components/Header'
+import Footer from '../../Components/Footer'
 import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
 import Toolbar from '@mui/material/Toolbar'
@@ -358,6 +359,8 @@ const Dashboard = () => {
           All data shown is mock data. Real-time monitoring will be available once database is populated with sensor data.
         </Alert>
       </Container>
+
+      <Footer />
     </Box>
   )
 }

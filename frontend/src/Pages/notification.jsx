@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useAlertStore } from '../stores/useAlertStore'
 import { useAuthStore } from '../stores/useAuthStore'
 import Header from '../Components/Header'
+import Footer from '../Components/Footer'
 import {
   Box,
   Container,
@@ -107,11 +108,11 @@ const Notification = () => {
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', display: 'flex', flexDirection: 'column' }}>
       <Header />
       <Box sx={{ height: 64 }} /> {/* Toolbar spacer */}
 
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 4, flexGrow: 1 }}>
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
           <Tabs value={tabValue} onChange={(e, v) => setTabValue(v)}>
             <Tab icon={<NotificationsIcon />} label="Alerts" iconPosition="start" />
@@ -253,6 +254,8 @@ const Notification = () => {
           </Card>
         )}
       </Container>
+
+      <Footer />
     </Box>
   )
 }

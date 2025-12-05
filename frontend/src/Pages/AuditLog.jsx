@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useAuditLogStore } from '../stores/useAuditLogStore'
 import Header from '../Components/Header'
+import Footer from '../Components/Footer'
 import {
   Box,
   Container,
@@ -85,11 +86,11 @@ const AuditLog = () => {
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', display: 'flex', flexDirection: 'column' }}>
       <Header />
       <Box sx={{ height: 64 }} /> {/* Toolbar spacer */}
 
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 4, flexGrow: 1 }}>
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
           <Tabs value={tabValue} onChange={(e, v) => setTabValue(v)}>
             <Tab icon={<HistoryIcon />} label="Service History" iconPosition="start" />
@@ -332,6 +333,8 @@ const AuditLog = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
+
+      <Footer />
     </Box>
   )
 }
