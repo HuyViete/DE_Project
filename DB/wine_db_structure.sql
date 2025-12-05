@@ -371,6 +371,24 @@ CREATE TABLE `warehouse` (
   KEY `idx_warehouse_token` (`invitation_token`),
   CONSTRAINT `fk_warehouse_owner` FOREIGN KEY (`owner_id`) REFERENCES `users` (`user_id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
+CREATE UNIQUE INDEX idx_users_username ON users(username);
+CREATE UNIQUE INDEX idx_users_email ON users(email);
+
+-- 2. Tăng tốc dashboard cảnh báo
+CREATE INDEX idx_alerts_warehouse ON alerts(warehouse_id);
+CREATE INDEX idx_alerts_created_at ON alerts(created_at);
+-- Gom nhóm kỹ sư và trạng thái đọc để load danh sách việc cần làm nhanh hơn
+CREATE INDEX idx_alerts_engineer_read ON alerts(engineer_id, is_read);
+
+-- 3. Tăng tốc tra cứu log hệ thống
+CREATE INDEX idx_auditlog_time ON auditlog(time_log);
+
+-- 4. Tăng tốc lọc sản phẩm (Ví dụ lọc theo độ cồn)
+CREATE INDEX idx_product_alcohol ON product(alcohol);
+
+
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
