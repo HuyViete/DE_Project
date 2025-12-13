@@ -68,11 +68,19 @@ export const useAuthStore = create ((set, get) => ({
       set({ loading: true })
 
       await authService.signOut()
-
+      toast.success('Sign out success!')
+    } catch (error) {
+      console.error(error)
+      // If it's 401, it means token expired, which is fine since we are logging out anyway
+      if (error.response?.status !== 401) {
+        toast.error('Fail to sign out')
+      }
+    } finally {
       // Clear user state
       set({
         accessToken: null,
-        user: null
+        user: null,
+        loading: false
       })
 
       // Clear localStorage
@@ -80,13 +88,6 @@ export const useAuthStore = create ((set, get) => ({
       localStorage.removeItem('username')
       localStorage.removeItem('role')
       localStorage.removeItem('warehouseId')
-
-      toast.success('Sign out success!')
-    } catch (error) {
-      console.error(error)
-      toast.error('Fail to sign out')
-    } finally {
-      set({ loading: false })
     }
   },
 

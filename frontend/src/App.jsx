@@ -17,9 +17,11 @@ const Dashboard = React.lazy(() => import('./Pages/Dashboard'))
 const Realtime = React.lazy(() => import('./Pages/realtime'))
 const WarehouseSetup = React.lazy(() => import('./Pages/WarehouseSetup'))
 
+const Team = React.lazy(() => import('./Pages/Team'))
+
 const PageLoader = () => (
   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-    Đang tải trang...
+    Loading...
   </div>
 )
 
@@ -41,6 +43,7 @@ export default function App() {
             <Route path='/realtime' element={<Realtime />} />
             <Route path='/notification' element={<Notification />} />
             <Route path='/auditlog' element={<AuditLog />} />
+            <Route path='/team' element={<Team />} />
           </Route>
 
         </Routes>

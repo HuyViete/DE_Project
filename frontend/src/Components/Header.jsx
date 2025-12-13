@@ -155,6 +155,7 @@ function Header() {
     { label: 'Dashboard', path: '/dashboard' },
     { label: 'Realtime', path: '/realtime' },
     { label: 'Alert', path: '/notification' },
+    { label: 'Team', path: '/team' },
     { label: 'Audit Log', path: '/auditlog' }
   ]
 
