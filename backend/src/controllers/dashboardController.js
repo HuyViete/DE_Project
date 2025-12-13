@@ -173,3 +173,67 @@ export const getRecentProducts = async (req, res) => {
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
+
+export const getComparisonData = async (req, res) => {
+    try {
+        const warehouseId = req.user.warehouse_id;
+        const { period } = req.query; // 'week', 'month', 'year'
+
+        let groupBy = '';
+        let dateFilter = '';
+        let dateFormat = '';
+
+        if (period === 'week') {
+            dateFilter = 'DATE(ip.time_predict) >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)';
+            groupBy = "DATE_FORMAT(ip.time_predict, '%Y-%m-%d')";
+            dateFormat = '%Y-%m-%d';
+        } else if (period === 'month') {
+            dateFilter = 'DATE(ip.time_predict) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)';
+            groupBy = "DATE_FORMAT(ip.time_predict, '%Y-%m-%d')";
+            dateFormat = '%Y-%m-%d';
+        } else if (period === 'year') {
+            dateFilter = 'DATE(ip.time_predict) >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)';
+            groupBy = 'DATE_FORMAT(ip.time_predict, "%Y-%m")';
+            dateFormat = '%Y-%m';
+        } else {
+            return res.status(400).json({ message: 'Invalid period' });
+        }
+
+        const [data] = await pool.query(`
+            SELECT 
+                DATE_FORMAT(ip.time_predict, ?) as date,
+                AVG(ip.quality_score) as avg_quality,
+                COUNT(*) as production_count
+            FROM is_predicted ip
+            JOIN product p ON ip.product_id = p.product_id
+            WHERE p.warehouse_id = ? AND ${dateFilter}
+            GROUP BY ${groupBy}
+            ORDER BY date ASC
+        `, [dateFormat, warehouseId]);
+
+        res.json(data);
+    } catch (error) {
+        console.error('Error fetching comparison data:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+};
+
+export const getAlertsByDate = async (req, res) => {
+    try {
+        const warehouseId = req.user.warehouse_id;
+        // Get alerts for the last 3 months for the calendar
+        const [alerts] = await pool.query(`
+            SELECT 
+                DATE(created_at) as date,
+                COUNT(*) as count
+            FROM alerts
+            WHERE warehouse_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 3 MONTH)
+            GROUP BY DATE(created_at)
+        `, [warehouseId]);
+
+        res.json(alerts);
+    } catch (error) {
+        console.error('Error fetching alerts by date:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+};

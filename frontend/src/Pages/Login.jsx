@@ -266,7 +266,7 @@ function Login() {
         </Container>
       </Box>
 
-      <Footer />
+      {/* <Footer /> */}
     </Box>
   )
 }

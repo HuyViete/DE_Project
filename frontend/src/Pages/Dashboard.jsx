@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import { useAuthStore } from '../../stores/useAuthStore'
-import { useDashboardStore } from '../../stores/useDashboardStore'
-import Logout from '../../Components/Logout'
-import Header from '../../Components/Header'
-import Footer from '../../Components/Footer'
+import { useAuthStore } from '../stores/useAuthStore'
+import { useDashboardStore } from '../stores/useDashboardStore'
+import Logout from '../Components/Logout'
+import Header from '../Components/Header'
+import Footer from '../Components/Footer'
 import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
 import Toolbar from '@mui/material/Toolbar'
@@ -27,6 +27,9 @@ import Alert from '@mui/material/Alert'
 import LinearProgress from '@mui/material/LinearProgress'
 import Tabs from '@mui/material/Tabs'
 import Tab from '@mui/material/Tab'
+import ComparisonChart from '../Components/Dashboard/ComparisonChart'
+import StreamingChart from '../Components/Dashboard/StreamingChart'
+import AlertCalendar from '../Components/Dashboard/AlertCalendar'
 
 // Stat Card Component
 const StatCard = ({ title, value, icon, color = 'primary' }) => (
@@ -211,6 +214,19 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* Analytics Section */}
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid item xs={12} md={8}>
+            <ComparisonChart />
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <AlertCalendar />
+          </Grid>
+          <Grid item xs={12}>
+            <StreamingChart />
+          </Grid>
+        </Grid>
 
         {/* Tabs for different views */}
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>

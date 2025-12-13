@@ -8,6 +8,8 @@ export const useDashboardStore = create((set) => ({
   lines: [],
   batches: [],
   recentProducts: [],
+  comparisonData: [],
+  alertsCalendar: [],
   warehouseInfo: null,
   loading: false,
   error: null,
@@ -15,12 +17,13 @@ export const useDashboardStore = create((set) => ({
   fetchDashboardData: async () => {
     set({ loading: true, error: null })
     try {
-      const [stats, lines, batches, products, info] = await Promise.all([
+      const [stats, lines, batches, products, info, alerts] = await Promise.all([
         dashboardService.getStats(),
         dashboardService.getLines(),
         dashboardService.getBatches(),
         dashboardService.getRecentProducts(),
-        warehouseService.getWarehouseInfo()
+        warehouseService.getWarehouseInfo(),
+        dashboardService.getAlertsByDate()
       ])
 
       set({
@@ -29,12 +32,23 @@ export const useDashboardStore = create((set) => ({
         batches: batches,
         recentProducts: products,
         warehouseInfo: info,
+        alertsCalendar: alerts,
         loading: false
       })
     } catch (error) {
       console.error('Error fetching dashboard data:', error)
       set({ error: error.message, loading: false })
       toast.error('Failed to load dashboard data')
+    }
+  },
+
+  fetchComparisonData: async (period) => {
+    try {
+      const data = await dashboardService.getComparisonData(period)
+      set({ comparisonData: data })
+    } catch (error) {
+      console.error('Error fetching comparison data:', error)
+      toast.error('Failed to load comparison data')
     }
   },
 

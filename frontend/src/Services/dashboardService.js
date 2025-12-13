@@ -19,5 +19,15 @@ export const dashboardService = {
   getRecentProducts: async () => {
     const response = await api.get('/dashboard/products')
     return response.data
+  },
+
+  getComparisonData: async (period) => {
+    const response = await api.get(`/dashboard/comparison?period=${period}`)
+    return response.data
+  },
+
+  getAlertsByDate: async () => {
+    const response = await api.get('/dashboard/alerts-calendar')
+    return response.data
   }
 }

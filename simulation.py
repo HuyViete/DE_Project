@@ -53,9 +53,11 @@ def generate_wine_data(line_id, warehouse_id):
 def main():
     parser = argparse.ArgumentParser(description='Wine Production Simulation')
     parser.add_argument('--warehouse', type=int, default=1, help='Warehouse ID to stream data to')
+    parser.add_argument('--interval', type=float, default=1)
     args = parser.parse_args()
     
     warehouse_id = args.warehouse
+    INTERVAL = args.interval
     print(f"Starting simulation for Warehouse {warehouse_id}. Sending data to {BACKEND_URL} every {INTERVAL} seconds.")
     
     while True:

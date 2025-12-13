@@ -4,7 +4,6 @@ import { Box, Button, Card, CardContent, TextField, Typography, Divider, Stack }
 import { warehouseService } from '../Services/warehouseService'
 import { useAuthStore } from '../stores/useAuthStore'
 import { toast } from 'sonner'
-import Footer from '../Components/Footer'
 
 export default function WarehouseSetup() {
   const navigate = useNavigate()
@@ -23,6 +22,7 @@ export default function WarehouseSetup() {
       toast.success('Warehouse created!')
       navigate('/dashboard')
     } catch (error) {
+      console.error(error)
       toast.error('Failed to create warehouse')
     } finally {
       setLoading(false)
@@ -38,6 +38,7 @@ export default function WarehouseSetup() {
       toast.success('Joined warehouse!')
       navigate('/dashboard')
     } catch (error) {
+      console.error(error)
       toast.error('Failed to join warehouse. Invalid token?')
     } finally {
       setLoading(false)
@@ -58,63 +59,63 @@ export default function WarehouseSetup() {
         justifyContent: 'center'
       }}>
         <Card sx={{ maxWidth: 600, width: '100%', p: 2 }}>
-        <CardContent>
-          <Typography variant="h4" gutterBottom align="center">
+          <CardContent>
+            <Typography variant="h4" gutterBottom align="center">
             Welcome!
-          </Typography>
-          <Typography variant="body1" color="text.secondary" align="center" sx={{ mb: 4 }}>
+            </Typography>
+            <Typography variant="body1" color="text.secondary" align="center" sx={{ mb: 4 }}>
             To get started, please create a new warehouse or join an existing one.
-          </Typography>
+            </Typography>
 
-          <Stack spacing={4}>
-            {/* Create Section */}
-            <Box>
-              <Typography variant="h6" gutterBottom>Create New Warehouse</Typography>
-              <Stack direction="row" spacing={2}>
-                <TextField
-                  fullWidth
-                  label="Categories (e.g. Red Wine, White Wine)"
-                  value={categories}
-                  onChange={(e) => setCategories(e.target.value)}
-                  disabled={loading}
-                />
-                <Button
-                  variant="contained"
-                  onClick={handleCreate}
-                  disabled={loading}
-                >
+            <Stack spacing={4}>
+              {/* Create Section */}
+              <Box>
+                <Typography variant="h6" gutterBottom>Create New Warehouse</Typography>
+                <Stack direction="row" spacing={2}>
+                  <TextField
+                    fullWidth
+                    label="Categories (e.g. Red Wine, White Wine)"
+                    value={categories}
+                    onChange={(e) => setCategories(e.target.value)}
+                    disabled={loading}
+                  />
+                  <Button
+                    variant="contained"
+                    onClick={handleCreate}
+                    disabled={loading}
+                  >
                   Create
-                </Button>
-              </Stack>
-            </Box>
+                  </Button>
+                </Stack>
+              </Box>
 
-            <Divider>OR</Divider>
+              <Divider>OR</Divider>
 
-            {/* Join Section */}
-            <Box>
-              <Typography variant="h6" gutterBottom>Join Existing Warehouse</Typography>
-              <Stack direction="row" spacing={2}>
-                <TextField
-                  fullWidth
-                  label="Invitation Token"
-                  value={token}
-                  onChange={(e) => setToken(e.target.value)}
-                  disabled={loading}
-                />
-                <Button
-                  variant="outlined"
-                  onClick={handleJoin}
-                  disabled={loading}
-                >
+              {/* Join Section */}
+              <Box>
+                <Typography variant="h6" gutterBottom>Join Existing Warehouse</Typography>
+                <Stack direction="row" spacing={2}>
+                  <TextField
+                    fullWidth
+                    label="Invitation Token"
+                    value={token}
+                    onChange={(e) => setToken(e.target.value)}
+                    disabled={loading}
+                  />
+                  <Button
+                    variant="outlined"
+                    onClick={handleJoin}
+                    disabled={loading}
+                  >
                   Join
-                </Button>
-              </Stack>
-            </Box>
-          </Stack>
-        </CardContent>
-      </Card>
+                  </Button>
+                </Stack>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
       </Box>
-      <Footer />
+      {/* <Footer /> */}
     </Box>
   )
 }
