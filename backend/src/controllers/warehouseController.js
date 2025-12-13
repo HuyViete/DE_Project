@@ -6,6 +6,8 @@ import {
   getWarehouseByOwnerId
 } from '../models/Warehouse.js';
 import { updateUserWarehouse, getUserById } from '../models/User.js';
+import { deleteProductById, deleteProductsByBatchId } from '../models/Product.js';
+import { createAlert } from '../models/Alert.js';
 import crypto from 'crypto';
 
 export const createWarehouse = async (req, res) => {
@@ -96,5 +98,79 @@ export const getWarehouseInfo = async (req, res) => {
   } catch (error) {
     console.error('Get warehouse info failed', error);
     return res.status(500).json({ message: "System failed" });
+  }
+};
+
+export const deleteProduct = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const warehouseId = req.user.warehouse_id;
+    const engineerId = req.user.user_id;
+
+    if (!warehouseId) return res.status(400).json({ message: "User not in a warehouse" });
+
+    await deleteProductById(productId);
+
+    const title = "Product deleted!";
+    const description = `Engineer ${engineerId} delete product ${productId}`;
+
+    await createAlert({
+      warehouse_id: warehouseId,
+      product_id: productId,
+      title,
+      description
+    });
+    
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`warehouse_${warehouseId}`).emit('new_alert', {
+        title,
+        description,
+        product_id: productId,
+        created_at: new Date()
+      });
+    }
+
+    res.status(200).json({ message: "Product deleted" });
+  } catch (error) {
+    console.error("Delete product failed", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const deleteBatch = async (req, res) => {
+  try {
+    const { batchId } = req.params;
+    const warehouseId = req.user.warehouse_id;
+    const engineerId = req.user.user_id;
+
+    if (!warehouseId) return res.status(400).json({ message: "User not in a warehouse" });
+
+    await deleteProductsByBatchId(batchId);
+
+    const title = "Batch deleted!";
+    const description = `Engineer ${engineerId} delete batch ${batchId} and its products.`;
+
+    await createAlert({
+      warehouse_id: warehouseId,
+      product_id: null,
+      title,
+      description
+    });
+
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`warehouse_${warehouseId}`).emit('new_alert', {
+        title,
+        description,
+        product_id: null,
+        created_at: new Date()
+      });
+    }
+
+    res.status(200).json({ message: "Batch deleted" });
+  } catch (error) {
+    console.error("Delete batch failed", error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };

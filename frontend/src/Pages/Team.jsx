@@ -53,20 +53,6 @@ const RoleSection = ({ title, members, icon, currentUser, isOwner, onRemove }) =
                 }
               }}
             >
-              {/* Owner Star */}
-              {member.user_id === member.owner_id && (
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    top: 12,
-                    right: 12,
-                    color: '#FFD700',
-                    zIndex: 1
-                  }}
-                >
-                  <StarIcon />
-                </Box>
-              )}
 
               {/* Remove Button */}
               {isOwner && member.user_id !== currentUser.user_id && (
@@ -78,9 +64,9 @@ const RoleSection = ({ title, members, icon, currentUser, isOwner, onRemove }) =
                     top: 12,
                     right: member.user_id === member.owner_id ? 40 : 12,
                     color: theme.palette.error.main,
-                    bgcolor: theme.palette.background.paper,
+                    bgcolor: theme.palette.error.lighter,
                     '&:hover': {
-                      bgcolor: theme.palette.error.lighter
+                      bgcolor: theme.palette.background.paper
                     }
                   }}
                 >
@@ -101,9 +87,22 @@ const RoleSection = ({ title, members, icon, currentUser, isOwner, onRemove }) =
                       {member.firstname?.[0]}{member.lastname?.[0]}
                     </Avatar>
                     <Box>
-                      <Typography variant="h6" fontWeight="bold">
-                        {member.firstname} {member.lastname}
-                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Typography variant="h6" fontWeight="bold">
+                          {member.firstname} {member.lastname}
+                        </Typography>
+                        {/* Owner Star */}
+                        {member.user_id === member.owner_id && (
+                          <Box
+                            sx={{
+                              color: '#FFD700',
+                              zIndex: 1
+                            }}
+                          >
+                            <StarIcon />
+                          </Box>
+                        )}
+                      </Box>
                       <Typography variant="body2" color="text.secondary">
                         {member.email}
                       </Typography>
@@ -186,7 +185,7 @@ const Team = () => {
   const engineers = members.filter(m => m.role === 'engineer')
   const testers = members.filter(m => m.role === 'tester')
 
-  // Check if current user is owner. 
+  // Check if current user is owner.
   // We can check if any member has owner_id === user.user_id
   const isOwner = members.length > 0 && members[0].owner_id === user?.user_id
 

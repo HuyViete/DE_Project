@@ -10,6 +10,7 @@ import warehouseRoute from './routes/warehouseRoute.js'
 import alertRoute from './routes/alertRoute.js'
 import auditLogRoute from './routes/auditLogRoute.js'
 import teamRoute from './routes/teamRoute.js'
+import testRoute from './routes/testRoute.js'
 import { connectDB } from "./libs/db.js";
 import { purgeExpiredSessions } from "./models/Session.js";
 import cookieParser from 'cookie-parser'
@@ -63,6 +64,7 @@ app.use("/api/warehouse", warehouseRoute);
 app.use("/api/alerts", alertRoute);
 app.use("/api/auditlog", auditLogRoute);
 app.use("/api/team", teamRoute);
+app.use("/api/test", testRoute);
 
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);

@@ -29,5 +29,11 @@ export const dashboardService = {
   getAlertsByDate: async () => {
     const response = await api.get('/dashboard/alerts-calendar')
     return response.data
+  },
+
+  getTesterComparisons: async () => {
+    const response = await api.get('/dashboard/tester-comparisons')
+    return response.data
   }
 }
+

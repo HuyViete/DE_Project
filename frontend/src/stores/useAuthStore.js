@@ -5,9 +5,11 @@ import { authService } from '../Services/authService'
 export const useAuthStore = create ((set, get) => ({
   accessToken: localStorage.getItem('accessToken') || null,
   user: localStorage.getItem('role') ? {
+    user_id: localStorage.getItem('userId') ? parseInt(localStorage.getItem('userId')) : null,
     username: localStorage.getItem('username'),
     role: localStorage.getItem('role'),
-    warehouseId: localStorage.getItem('warehouseId')
+    warehouseId: localStorage.getItem('warehouseId') ? parseInt(localStorage.getItem('warehouseId')) : null,
+    warehouse_id: localStorage.getItem('warehouseId') ? parseInt(localStorage.getItem('warehouseId')) : null
   } : null,
   loading: false,
 
@@ -40,10 +42,16 @@ export const useAuthStore = create ((set, get) => ({
         }
       })
 
-      await authService.fetchMe()
+      const me = await authService.fetchMe()
+      
+      set({
+        accessToken: data.token,
+        user: me
+      })
 
       // Store in localStorage for persistence
       localStorage.setItem('accessToken', data.token)
+      localStorage.setItem('userId', me.user_id)
       localStorage.setItem('username', data.username)
       localStorage.setItem('role', data.role)
       if (data.warehouseId) {
@@ -53,7 +61,7 @@ export const useAuthStore = create ((set, get) => ({
       }
 
       toast.success('Sign in success!')
-      return data.role
+      return { role: data.role, warehouseId: data.warehouseId }
     } catch (error) {
       console.error(error)
       toast.error('Fail to sign in')
@@ -85,6 +93,7 @@ export const useAuthStore = create ((set, get) => ({
 
       // Clear localStorage
       localStorage.removeItem('accessToken')
+      localStorage.removeItem('userId')
       localStorage.removeItem('username')
       localStorage.removeItem('role')
       localStorage.removeItem('warehouseId')
@@ -97,6 +106,30 @@ export const useAuthStore = create ((set, get) => ({
       const newUser = { ...currentUser, warehouseId }
       set({ user: newUser })
       localStorage.setItem('warehouseId', warehouseId)
+    }
+  },
+
+  fetchCurrentUser: async () => {
+    try {
+      const me = await authService.fetchMe()
+      // Normalize user object to have both camelCase and snake_case for compatibility
+      const normalizedUser = {
+        ...me,
+        warehouseId: me.warehouse_id
+      }
+      set({ user: normalizedUser })
+      
+      // Update localStorage to ensure consistency
+      localStorage.setItem('userId', me.user_id)
+      localStorage.setItem('username', me.username)
+      localStorage.setItem('role', me.role)
+      if (me.warehouse_id) {
+        localStorage.setItem('warehouseId', me.warehouse_id)
+      } else {
+        localStorage.removeItem('warehouseId')
+      }
+    } catch (error) {
+      console.error('Failed to fetch current user', error)
     }
   }
 }))

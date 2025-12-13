@@ -138,7 +138,7 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 function Header() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { signOut } = useAuthStore()
+  const { signOut, user } = useAuthStore()
   const { unreadCount, fetchAlerts, connectSocket } = useAlertStore()
 
   useEffect(() => {
@@ -151,13 +151,15 @@ function Header() {
     navigate('/login')
   }
 
-  const navItems = [
-    { label: 'Dashboard', path: '/dashboard' },
-    { label: 'Realtime', path: '/realtime' },
-    { label: 'Alert', path: '/notification' },
-    { label: 'Team', path: '/team' },
-    { label: 'Audit Log', path: '/auditlog' }
-  ]
+  const navItems = user?.role === 'tester'
+    ? [{ label: 'Test', path: '/tester' }]
+    : [
+      { label: 'Dashboard', path: '/dashboard' },
+      { label: 'Realtime', path: '/realtime' },
+      { label: 'Alert', path: '/notification' },
+      { label: 'Team', path: '/team' },
+      { label: 'Audit Log', path: '/auditlog' }
+    ]
 
   return (
     <AppBar
@@ -171,6 +173,15 @@ function Header() {
     >
       <Toolbar sx={{ px: { xs: 2, sm: 3 }, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Box
+            component="img"
+            sx={{
+              height: 32,
+              mr: 2
+            }}
+            alt="The house from the offer."
+            src="/winemanu.png"
+          />
           <Typography
             variant="h6"
             component="div"

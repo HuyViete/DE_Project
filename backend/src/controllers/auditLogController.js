@@ -5,6 +5,8 @@ import {
   deleteAuditLog
 } from '../models/AuditLog.js';
 
+import { pool } from '../libs/db.js';
+
 export const getAuditLogs = async (req, res) => {
   try {
     const warehouseId = req.user.warehouse_id;
@@ -53,7 +55,15 @@ export const addAuditLog = async (req, res) => {
 
     // Only pass engineer_id if the user is an engineer, otherwise null
     // This is because the foreign key constraint requires engineer_id to reference the engineer table
-    const engineerId = userRole === 'engineer' ? userId : null;
+    let engineerId = null;
+    if (userRole === 'engineer') {
+      engineerId = userId;
+      // Self-healing: Check if engineer exists, if not create it
+      const [engineers] = await pool.query('SELECT user_id FROM engineer WHERE user_id = ?', [userId]);
+      if (engineers.length === 0) {
+        await pool.query('INSERT INTO engineer (user_id, expertise) VALUES (?, ?)', [userId, 'General']);
+      }
+    }
 
     const newLog = await createAuditLog(event, description || '', warehouseId, engineerId);
     

@@ -54,10 +54,10 @@ const ComparisonChart = () => {
                 borderColor: theme.palette.divider,
                 '&.Mui-selected': {
                   color: theme.palette.primary.main,
-                  bgcolor: theme.palette.primary.lighter,
+                  bgcolor: theme.palette.primary.light,
                   borderColor: theme.palette.primary.main,
                   '&:hover': {
-                    bgcolor: theme.palette.primary.lighter
+                    bgcolor: theme.palette.primary.light
                   }
                 }
               }

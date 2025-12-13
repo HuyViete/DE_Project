@@ -162,6 +162,45 @@ export async function storeProduct(data, prediction) {
     }
 }
 
+export async function getProductDetails(productId) {
+    const [rows] = await pool.query(
+        `SELECT p.*, ip.quality_score, ip.confidence, ip.quality_category 
+         FROM product p 
+         LEFT JOIN is_predicted ip ON p.product_id = ip.product_id 
+         WHERE p.product_id = ?`,
+        [productId]
+    );
+    return rows[0];
+}
+
+export async function getAverageMetric(metric, filterType, filterValue) {
+    // filterType: 'line_id' or 'batch_id'
+    const allowedMetrics = [
+        'density', 'chlorides', 'alcohol', 'sulphates', 'pH', 
+        'fixed_acidity', 'citric_acid', 'volatile_acidity', 
+        'free_sulfur_dioxide', 'total_sulfur_dioxide', 'residual_sugar', 'quality_score'
+    ];
+
+    if (!allowedMetrics.includes(metric)) {
+        throw new Error("Invalid metric");
+    }
+
+    let query;
+    if (metric === 'quality_score') {
+        query = `SELECT AVG(ip.quality_score) as avg_value 
+                 FROM is_predicted ip 
+                 JOIN product p ON ip.product_id = p.product_id 
+                 WHERE p.${filterType} = ?`;
+    } else {
+        query = `SELECT AVG(${metric}) as avg_value 
+                 FROM product 
+                 WHERE ${filterType} = ?`;
+    }
+
+    const [rows] = await pool.query(query, [filterValue]);
+    return rows[0].avg_value;
+}
+
 export async function getRecentProducts(limit = 50, warehouseId = null) {
     let query = `
         SELECT 
@@ -199,4 +238,12 @@ export async function getRecentProducts(limit = 50, warehouseId = null) {
         // Add default type if missing (since we don't store it yet)
         type: row.type || 'unknown' 
     }));
+}
+
+export async function deleteProductById(productId) {
+  await pool.query('DELETE FROM product WHERE product_id = ?', [productId]);
+}
+
+export async function deleteProductsByBatchId(batchId) {
+  await pool.query('DELETE FROM product WHERE batch_id = ?', [batchId]);
 }

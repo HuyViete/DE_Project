@@ -19,5 +19,15 @@ export const warehouseService = {
   getWarehouseInfo: async () => {
     const response = await api.get('/warehouse')
     return response.data
+  },
+
+  deleteProduct: async (productId) => {
+    const response = await api.delete(`/warehouse/product/${productId}`);
+    return response.data;
+  },
+
+  deleteBatch: async (batchId) => {
+    const response = await api.delete(`/warehouse/batch/${batchId}`);
+    return response.data;
   }
 }

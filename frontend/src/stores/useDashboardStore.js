@@ -10,6 +10,7 @@ export const useDashboardStore = create((set) => ({
   recentProducts: [],
   comparisonData: [],
   alertsCalendar: [],
+  testerComparisons: [],
   warehouseInfo: null,
   loading: false,
   error: null,
@@ -17,13 +18,14 @@ export const useDashboardStore = create((set) => ({
   fetchDashboardData: async () => {
     set({ loading: true, error: null })
     try {
-      const [stats, lines, batches, products, info, alerts] = await Promise.all([
+      const [stats, lines, batches, products, info, alerts, testerComparisons] = await Promise.all([
         dashboardService.getStats(),
         dashboardService.getLines(),
         dashboardService.getBatches(),
         dashboardService.getRecentProducts(),
         warehouseService.getWarehouseInfo(),
-        dashboardService.getAlertsByDate()
+        dashboardService.getAlertsByDate(),
+        dashboardService.getTesterComparisons()
       ])
 
       set({
@@ -33,6 +35,7 @@ export const useDashboardStore = create((set) => ({
         recentProducts: products,
         warehouseInfo: info,
         alertsCalendar: alerts,
+        testerComparisons: testerComparisons,
         loading: false
       })
     } catch (error) {

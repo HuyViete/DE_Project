@@ -139,10 +139,16 @@ function Login() {
     setLoading(true)
 
     try {
-      await signIn(username, password)
+      const { role, warehouseId } = await signIn(username, password)
 
       // Navigate to dashboard based on role from backend
-      navigate('/dashboard')
+      if (role === 'tester') {
+        navigate('/tester')
+      } else if (warehouseId) {
+        navigate('/dashboard')
+      } else {
+        navigate('/setup-warehouse')
+      }
     } catch (error) {
       setError('Failed to sign in. Please check your credentials.')
       console.error('Login error:', error)

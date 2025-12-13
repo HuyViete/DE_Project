@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/useAuthStore'
 import { useDashboardStore } from '../stores/useDashboardStore'
 import Logout from '../Components/Logout'
@@ -23,6 +24,10 @@ import WarehouseIcon from '@mui/icons-material/Warehouse'
 import TimelineIcon from '@mui/icons-material/Timeline'
 import LocalShippingIcon from '@mui/icons-material/LocalShipping'
 import WineBarIcon from '@mui/icons-material/WineBar'
+import FactCheckIcon from '@mui/icons-material/FactCheck'
+import GpsFixedIcon from '@mui/icons-material/GpsFixed'
+import DoneAllIcon from '@mui/icons-material/DoneAll'
+import CompareArrowsIcon from '@mui/icons-material/CompareArrows'
 import Alert from '@mui/material/Alert'
 import LinearProgress from '@mui/material/LinearProgress'
 import Tabs from '@mui/material/Tabs'
@@ -60,12 +65,14 @@ const StatCard = ({ title, value, icon, color = 'primary' }) => (
 )
 
 const Dashboard = () => {
+  const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
   const {
     warehouse,
     lines,
     batches,
     recentProducts,
+    testerComparisons,
     warehouseInfo,
     loading,
     fetchDashboardData,
@@ -75,8 +82,12 @@ const Dashboard = () => {
   const [tabValue, setTabValue] = useState(0)
 
   useEffect(() => {
+    if (!user?.warehouseId) {
+      navigate('/setup-warehouse')
+      return
+    }
     fetchDashboardData()
-  }, [])
+  }, [user, navigate])
 
   const getStatusChip = (status) => {
     const statusConfig = {
@@ -128,42 +139,101 @@ const Dashboard = () => {
 
         {loading && <LinearProgress sx={{ mb: 2 }} />}
 
-        {/* Stats Cards */}
+        {/* Stats Cards Scrollable Container */}
         {warehouse && (
-          <Grid container spacing={3} sx={{ mb: 4 }}>
-            <Grid item xs={12} sm={6} md={3}>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 3,
+              overflowX: 'auto',
+              pb: 2, // Padding bottom for scrollbar
+              mb: 4,
+              '&::-webkit-scrollbar': {
+                height: 8,
+              },
+              '&::-webkit-scrollbar-track': {
+                backgroundColor: '#f1f1f1',
+                borderRadius: 4,
+              },
+              '&::-webkit-scrollbar-thumb': {
+                backgroundColor: '#888',
+                borderRadius: 4,
+              },
+              '&::-webkit-scrollbar-thumb:hover': {
+                backgroundColor: '#555',
+              },
+            }}
+          >
+            <Box sx={{ minWidth: 130 }}>
               <StatCard
                 title="Total Lines"
                 value={warehouse.total_lines}
                 icon={<TimelineIcon />}
                 color="primary"
               />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            </Box>
+            <Box sx={{ minWidth: 130 }}>
               <StatCard
                 title="Active Lines"
                 value={warehouse.active_lines}
                 icon={<TimelineIcon />}
                 color="success"
               />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            </Box>
+            <Box sx={{ minWidth: 130 }}>
               <StatCard
                 title="Total Batches"
                 value={warehouse.total_batches}
                 icon={<LocalShippingIcon />}
                 color="info"
               />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            </Box>
+            <Box sx={{ minWidth: 130 }}>
               <StatCard
                 title="Total Products"
                 value={warehouse.total_products.toLocaleString()}
                 icon={<WineBarIcon />}
                 color="secondary"
               />
-            </Grid>
-          </Grid>
+            </Box>
+
+            {warehouse.testing_stats && (
+              <>
+                <Box sx={{ minWidth: 130 }}>
+                  <StatCard
+                    title="Total Tested"
+                    value={warehouse.testing_stats.total_tested}
+                    icon={<FactCheckIcon />}
+                    color="primary"
+                  />
+                </Box>
+                <Box sx={{ minWidth: 130 }}>
+                  <StatCard
+                    title="Accuracy (±1)"
+                    value={`${warehouse.testing_stats.accuracy_1}%`}
+                    icon={<GpsFixedIcon />}
+                    color="success"
+                  />
+                </Box>
+                <Box sx={{ minWidth: 130 }}>
+                  <StatCard
+                    title="Accuracy (±3)"
+                    value={`${warehouse.testing_stats.accuracy_3}%`}
+                    icon={<DoneAllIcon />}
+                    color="info"
+                  />
+                </Box>
+                <Box sx={{ minWidth: 130 }}>
+                  <StatCard
+                    title="Avg Difference"
+                    value={warehouse.testing_stats.avg_diff}
+                    icon={<CompareArrowsIcon />}
+                    color="warning"
+                  />
+                </Box>
+              </>
+            )}
+          </Box>
         )}
 
         {/* Warehouse Info */}
@@ -234,6 +304,7 @@ const Dashboard = () => {
             <Tab label="Production Lines" />
             <Tab label="Active Batches" />
             <Tab label="Recent Products" />
+            <Tab label="Tester Comparisons" />
           </Tabs>
         </Box>
 
@@ -363,6 +434,61 @@ const Dashboard = () => {
                         </TableCell>
                       </TableRow>
                     ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </CardContent>
+          </Card>
+        )}
+
+        {tabValue === 3 && (
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+                Tester Comparisons
+              </Typography>
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Tester Name</TableCell>
+                      <TableCell>Tester ID</TableCell>
+                      <TableCell>Product ID</TableCell>
+                      <TableCell align="right">Tester Score</TableCell>
+                      <TableCell align="right">Model Score</TableCell>
+                      <TableCell align="right">Difference</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {testerComparisons && testerComparisons.length > 0 ? (
+                      testerComparisons.map((row, index) => {
+                        const diff = row.model_score !== null 
+                          ? Math.abs(row.tester_score - row.model_score).toFixed(2) 
+                          : 'N/A';
+                        return (
+                          <TableRow key={index}>
+                            <TableCell>{row.tester_name}</TableCell>
+                            <TableCell>{row.tester_id}</TableCell>
+                            <TableCell>{row.product_id}</TableCell>
+                            <TableCell align="right">{Number(row.tester_score).toFixed(2)}</TableCell>
+                            <TableCell align="right">
+                              {row.model_score !== null ? Number(row.model_score).toFixed(2) : 'N/A'}
+                            </TableCell>
+                            <TableCell align="right">
+                              <Chip 
+                                label={diff} 
+                                color={diff !== 'N/A' && parseFloat(diff) > 1.0 ? 'error' : 'success'} 
+                                size="small" 
+                              />
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={6} align="center">No comparison data available</TableCell>
+                      </TableRow>
+                    )}
                   </TableBody>
                 </Table>
               </TableContainer>

@@ -45,13 +45,38 @@ export const getWarehouseStats = async (req, res) => {
             WHERE l.warehouse_id = ? AND b.producted_date >= DATE_SUB(NOW(), INTERVAL 7 DAY)
         `, [warehouse.warehouse_id]);
 
+        // Calculate testing stats
+        const [testingStats] = await pool.query(`
+            SELECT 
+                COUNT(*) as total_tested,
+                AVG(ABS(tr.score - ip.quality_score)) as avg_diff,
+                SUM(CASE WHEN ABS(tr.score - ip.quality_score) <= 1 THEN 1 ELSE 0 END) as count_within_1,
+                SUM(CASE WHEN ABS(tr.score - ip.quality_score) <= 3 THEN 1 ELSE 0 END) as count_within_3,
+                COUNT(ip.quality_score) as total_with_prediction
+            FROM test_random tr
+            JOIN product p ON tr.product_id = p.product_id
+            LEFT JOIN is_predicted ip ON tr.product_id = ip.product_id
+            WHERE p.warehouse_id = ?
+        `, [warehouse.warehouse_id]);
+
+        const stats = testingStats[0];
+        const totalWithPrediction = stats.total_with_prediction || 0;
+        const accuracy1 = totalWithPrediction > 0 ? (stats.count_within_1 / totalWithPrediction) * 100 : 0;
+        const accuracy3 = totalWithPrediction > 0 ? (stats.count_within_3 / totalWithPrediction) * 100 : 0;
+
         res.json({
             warehouse_id: warehouse.warehouse_id,
             categories: warehouse.categories,
             total_lines: linesCount[0].count,
             active_lines: activeLines[0].count,
             total_batches: batchesCount[0].count,
-            total_products: productsCount[0].count
+            total_products: productsCount[0].count,
+            testing_stats: {
+                total_tested: stats.total_tested,
+                avg_diff: stats.avg_diff !== null ? parseFloat(stats.avg_diff).toFixed(2) : 0,
+                accuracy_1: accuracy1.toFixed(1),
+                accuracy_3: accuracy3.toFixed(1)
+            }
         });
     } catch (error) {
         console.error('Error fetching warehouse stats:', error);
@@ -234,6 +259,33 @@ export const getAlertsByDate = async (req, res) => {
         res.json(alerts);
     } catch (error) {
         console.error('Error fetching alerts by date:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+};
+
+export const getTesterComparisons = async (req, res) => {
+    try {
+        const warehouseId = req.user.warehouse_id;
+        
+        const [rows] = await pool.query(`
+            SELECT 
+                u.username as tester_name,
+                tr.tester_id,
+                tr.product_id,
+                tr.score as tester_score,
+                ip.quality_score as model_score
+            FROM test_random tr
+            JOIN users u ON tr.tester_id = u.user_id
+            LEFT JOIN is_predicted ip ON tr.product_id = ip.product_id
+            JOIN product p ON tr.product_id = p.product_id
+            WHERE p.warehouse_id = ?
+            ORDER BY tr.created_at DESC
+            LIMIT 50
+        `, [warehouseId]);
+
+        res.json(rows);
+    } catch (error) {
+        console.error('Error fetching tester comparisons:', error);
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };

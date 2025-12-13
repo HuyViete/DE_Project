@@ -1,6 +1,7 @@
 import { create } from 'zustand'
-import { getAlerts, markRead, getSettings, updateSettings } from '../Services/alertService'
+import { getAlerts, markRead, deleteRead, getSettings, updateSettings, deleteSetting, getAlertDetails, deleteAlert, announceAlert } from '../Services/alertService'
 import { io } from 'socket.io-client'
+import { toast } from 'sonner'
 
 const SOCKET_URL = 'http://localhost:5001'
 
@@ -22,9 +23,62 @@ export const useAlertStore = create((set, get) => ({
     }
   },
 
+  getAlertDetails: async (alertId) => {
+    try {
+      return await getAlertDetails(alertId)
+    } catch (error) {
+      console.error('Failed to fetch alert details', error)
+      throw error
+    }
+  },
+
+  deleteAlert: async (alertId) => {
+    try {
+      await deleteAlert(alertId)
+      set((state) => ({
+        alerts: state.alerts.filter(a => a.alert_id !== alertId)
+      }))
+      toast.success('Alert deleted successfully')
+    } catch (error) {
+      console.error('Failed to delete alert', error)
+      toast.error('Failed to delete alert')
+      throw error
+    }
+  },
+
+  announceAlert: async (data) => {
+    try {
+      await announceAlert(data)
+      toast.success('Alert announced successfully')
+    } catch (error) {
+      console.error('Failed to announce alert', error)
+      toast.error('Failed to announce alert')
+      throw error
+    }
+  },
+
+  toggleAlertStatus: async (alertId, isRead) => {
+    try {
+      await markRead(alertId, isRead)
+      // Optimistic update
+      set((state) => {
+        const newAlerts = state.alerts.map(a =>
+          (alertId === undefined || a.alert_id === alertId) ? { ...a, is_read: isRead } : a
+        )
+        
+        // Recalculate unread count
+        const newUnreadCount = newAlerts.filter(a => !a.is_read).length
+        
+        return { alerts: newAlerts, unreadCount: newUnreadCount }
+      })
+    } catch (error) {
+      console.error('Failed to toggle alert status', error)
+    }
+  },
+
   markAsRead: async (alertId) => {
     try {
-      await markRead(alertId)
+      await markRead(alertId, true)
       // Optimistic update
       set((state) => {
         const newAlerts = state.alerts.map(a =>
@@ -35,6 +89,17 @@ export const useAlertStore = create((set, get) => ({
       })
     } catch (error) {
       console.error('Failed to mark read', error)
+    }
+  },
+
+  deleteReadAlerts: async () => {
+    try {
+      await deleteRead()
+      set((state) => ({
+        alerts: state.alerts.filter(a => !a.is_read)
+      }))
+    } catch (error) {
+      console.error('Failed to delete read alerts', error)
     }
   },
 
@@ -53,6 +118,18 @@ export const useAlertStore = create((set, get) => ({
       set({ settings: newSettings })
     } catch (error) {
       console.error('Failed to save settings', error)
+      throw error
+    }
+  },
+
+  removeSetting: async (metric) => {
+    try {
+      await deleteSetting(metric)
+      set((state) => ({
+        settings: state.settings.filter(s => s.metric !== metric)
+      }))
+    } catch (error) {
+      console.error('Failed to remove setting', error)
       throw error
     }
   },

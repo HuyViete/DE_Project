@@ -5,7 +5,8 @@ import {
     getActiveBatches, 
     getRecentProducts,
     getComparisonData,
-    getAlertsByDate
+    getAlertsByDate,
+    getTesterComparisons
 } from '../controllers/dashboardController.js';
 
 const router = express.Router();
@@ -16,5 +17,6 @@ router.get('/batches', getActiveBatches);
 router.get('/products', getRecentProducts);
 router.get('/comparison', getComparisonData);
 router.get('/alerts-calendar', getAlertsByDate);
+router.get('/tester-comparisons', getTesterComparisons);
 
 export default router;

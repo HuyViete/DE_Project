@@ -38,25 +38,25 @@ const theme = extendTheme({
     MuiCssBaseline: {
       styleOverrides: {
         html: {
-          scrollbarWidth: 'none',
+          scrollbarWidth: 'none'
         },
         body: {
-          scrollbarWidth: 'none',
+          scrollbarWidth: 'none'
         },
         '#root': {
-          scrollbarWidth: 'none',
+          scrollbarWidth: 'none'
         },
         // Hide scrollbar for Chrome, Safari and Opera
         '&::-webkit-scrollbar': {
-          display: 'none',
+          display: 'none'
         },
         // Target all elements for Firefox
         '*': {
-          scrollbarWidth: 'none',
+          scrollbarWidth: 'none'
         },
         // Target all elements for Chrome/Safari/Edge
         '*::-webkit-scrollbar': {
-          display: 'none',
+          display: 'none'
         }
       }
     }

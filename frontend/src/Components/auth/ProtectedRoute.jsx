@@ -1,9 +1,10 @@
 import React from 'react'
 import { useAuthStore } from '../../stores/useAuthStore'
-import { Navigate, Outlet } from 'react-router'
+import { Navigate, Outlet, useLocation } from 'react-router'
 
 const ProtectedRoute = () => {
-  const { accessToken } = useAuthStore()
+  const { accessToken, user } = useAuthStore()
+  const location = useLocation()
 
   if (!accessToken) {
     return (
@@ -13,6 +14,11 @@ const ProtectedRoute = () => {
       />
     )
   }
+
+  if (user?.role === 'tester' && location.pathname !== '/tester') {
+    return <Navigate to='/tester' replace />
+  }
+
   return (
     <Outlet></Outlet>
   )

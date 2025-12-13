@@ -33,10 +33,39 @@ export async function markAlertAsRead(alertId) {
   );
 }
 
+export async function updateAlertReadStatus(alertId, isRead) {
+  await pool.query(
+    `UPDATE alerts SET is_read = ? WHERE alert_id = ?`,
+    [isRead, alertId]
+  );
+}
+
 export async function markAllAlertsAsRead(warehouseId) {
   await pool.query(
     `UPDATE alerts SET is_read = TRUE WHERE warehouse_id = ?`,
     [warehouseId]
+  );
+}
+
+export async function deleteReadAlerts(warehouseId) {
+  await pool.query(
+    `DELETE FROM alerts WHERE warehouse_id = ? AND is_read = TRUE`,
+    [warehouseId]
+  );
+}
+
+export async function getAlertById(alertId) {
+  const [rows] = await pool.query(
+    `SELECT * FROM alerts WHERE alert_id = ?`,
+    [alertId]
+  );
+  return rows[0];
+}
+
+export async function deleteAlert(alertId) {
+  await pool.query(
+    `DELETE FROM alerts WHERE alert_id = ?`,
+    [alertId]
   );
 }
 
@@ -48,6 +77,13 @@ export async function getAlertSettings(warehouseId) {
     [warehouseId]
   );
   return rows;
+}
+
+export async function deleteAlertSetting(warehouseId, metric) {
+  await pool.query(
+    `DELETE FROM alert_settings WHERE warehouse_id = ? AND metric = ?`,
+    [warehouseId, metric]
+  );
 }
 
 export async function upsertAlertSetting(warehouseId, metric, minValue, maxValue, enabled) {

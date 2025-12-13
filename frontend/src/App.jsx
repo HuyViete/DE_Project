@@ -8,6 +8,7 @@ import Login from './Pages/Login'
 import ProtectedRoute from './Components/auth/ProtectedRoute'
 import Notification from './Pages/notification'
 import AuditLog from './Pages/AuditLog'
+import Tester from './Pages/Tester'
 
 const Help = React.lazy(() => import('./pages/Help'))
 const About = React.lazy(() => import('./pages/About'))
@@ -26,11 +27,31 @@ const PageLoader = () => (
 )
 
 export default function App() {
+  const { accessToken, fetchCurrentUser, user } = useAuthStore()
+
+  React.useEffect(() => {
+    if (accessToken) {
+      fetchCurrentUser()
+    }
+  }, [accessToken])
+
   return (
     <Router>
       <Suspense fallback={<PageLoader />}>
         <Routes>
-          <Route path='/' element={<Navigate to="/login" replace />} />
+          <Route path='/' element={
+            accessToken ? (
+              user?.role === 'tester' ? (
+                <Navigate to="/tester" replace />
+              ) : user?.warehouseId ? (
+                <Navigate to="/dashboard" replace />
+              ) : (
+                <Navigate to="/setup-warehouse" replace />
+              )
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          } />
           <Route path='/login' element={<Login />} />
           <Route path='/signup' element={<Signup />} />
 
@@ -44,6 +65,7 @@ export default function App() {
             <Route path='/notification' element={<Notification />} />
             <Route path='/auditlog' element={<AuditLog />} />
             <Route path='/team' element={<Team />} />
+            <Route path='/tester' element={<Tester />} />
           </Route>
 
         </Routes>
