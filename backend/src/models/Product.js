@@ -241,9 +241,66 @@ export async function getRecentProducts(limit = 50, warehouseId = null) {
 }
 
 export async function deleteProductById(productId) {
-  await pool.query('DELETE FROM product WHERE product_id = ?', [productId]);
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    // Delete from dependent tables first to avoid foreign key constraints
+    await connection.query('DELETE FROM alerts WHERE product_id = ?', [productId]);
+    await connection.query('DELETE FROM is_predicted WHERE product_id = ?', [productId]);
+    await connection.query('DELETE FROM measure WHERE product_id = ?', [productId]);
+    await connection.query('DELETE FROM test_random WHERE product_id = ?', [productId]);
+
+    // Delete the product
+    await connection.query('DELETE FROM product WHERE product_id = ?', [productId]);
+
+    await connection.commit();
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
 }
 
 export async function deleteProductsByBatchId(batchId) {
-  await pool.query('DELETE FROM product WHERE batch_id = ?', [batchId]);
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    // Delete dependent data for all products in this batch
+    await connection.query(`
+      DELETE a FROM alerts a
+      INNER JOIN product p ON a.product_id = p.product_id
+      WHERE p.batch_id = ?
+    `, [batchId]);
+
+    await connection.query(`
+      DELETE ip FROM is_predicted ip
+      INNER JOIN product p ON ip.product_id = p.product_id
+      WHERE p.batch_id = ?
+    `, [batchId]);
+
+    await connection.query(`
+      DELETE m FROM measure m
+      INNER JOIN product p ON m.product_id = p.product_id
+      WHERE p.batch_id = ?
+    `, [batchId]);
+
+    await connection.query(`
+      DELETE tr FROM test_random tr
+      INNER JOIN product p ON tr.product_id = p.product_id
+      WHERE p.batch_id = ?
+    `, [batchId]);
+
+    // Delete the products
+    await connection.query('DELETE FROM product WHERE batch_id = ?', [batchId]);
+
+    await connection.commit();
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
 }

@@ -114,9 +114,10 @@ export const deleteProduct = async (req, res) => {
     const title = "Product deleted!";
     const description = `Engineer ${engineerId} delete product ${productId}`;
 
+    // Pass null for product_id since the product is deleted
     await createAlert({
       warehouse_id: warehouseId,
-      product_id: productId,
+      product_id: null,
       title,
       description
     });
